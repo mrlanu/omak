@@ -9,7 +9,13 @@ use std::collections::HashMap;
 use std::ffi::CString;
 use std::mem;
 use std::ptr;
-use texture::{ImgKind, Texture};
+use texture::Texture;
+
+pub enum ImgKind {
+    PNG,
+    JPEG,
+    JPG,
+}
 
 pub struct Renderer {
     pub width: f32,

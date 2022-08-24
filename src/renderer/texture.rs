@@ -1,12 +1,7 @@
+use crate::renderer::ImgKind;
 use gl::types::*;
 use std::os::raw::c_void;
 use std::path::Path;
-
-pub enum ImgKind {
-    PNG,
-    JPEG,
-    JPG,
-}
 
 pub struct Texture {
     pub id: u32,
