@@ -1,1 +1,2 @@
-pub mod shader;
+mod gl_objects;
+mod shader;
