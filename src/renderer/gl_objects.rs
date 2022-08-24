@@ -143,8 +143,8 @@ impl VAO {
 }
 
 pub struct VertexesLayout {
-    elements: Vec<VertexBufferElement>,
-    stride: i32,
+    pub elements: Vec<VertexBufferElement>,
+    pub stride: i32,
 }
 impl VertexesLayout {
     pub fn new() -> Self {
