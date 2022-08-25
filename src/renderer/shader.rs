@@ -1,15 +1,15 @@
 use gl::types::*;
 use std::ffi::CString;
-use std::fs;
 use std::ptr;
 
+#[derive(Clone)]
 pub struct Shader {
     pub id: u32,
 }
 
 impl Shader {
-    pub fn new(path: &str) -> Self {
-        let (vertex_code, fragment_code) = parse_shader(path);
+    pub fn new(source: (String, String)) -> Self {
+        let (vertex_code, fragment_code) = source;
         let vertex_src = CString::new(vertex_code.as_bytes()).unwrap();
         let fragment_src = CString::new(fragment_code.as_bytes()).unwrap();
 
@@ -45,35 +45,6 @@ impl Shader {
             gl::DeleteProgram(self.id);
         }
     }
-}
-
-fn parse_shader(path: &str) -> (String, String) {
-    let mut kind = -1;
-    let mut vertex = String::new();
-    let mut fragment = String::new();
-    let contents = fs::read_to_string(&path).expect("Should have been able to read the file");
-    for line in contents.lines() {
-        if line.contains("#shader") {
-            if line.contains("vertex") {
-                kind = 0;
-            } else if line.contains("fragment") {
-                kind = 1;
-            }
-        } else {
-            match kind {
-                0 => {
-                    vertex.push_str(&line);
-                    vertex.push_str("\n");
-                }
-                1 => {
-                    fragment.push_str(&line);
-                    fragment.push_str("\n");
-                }
-                _ => {}
-            }
-        }
-    }
-    (vertex, fragment)
 }
 
 fn compile_errors(shader_id: u32, tp: &str) {

@@ -19,7 +19,7 @@ impl Runnable for MyGame {
 impl MyGame {
     pub fn new() -> Self {
         Self {
-            player: Player::new(300, 200, 16, 16, "resources/img/boy_down_1.png"),
+            player: Player::new(300, 200, 40, 40, "my_s.png"),
         }
     }
 

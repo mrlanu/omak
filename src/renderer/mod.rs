@@ -1,7 +1,9 @@
 mod gl_objects;
 mod shader;
 mod texture;
+pub mod utils;
 
+use self::utils::ResourcesManager;
 use gl::types::*;
 use gl_objects::{MyTypes, VertexBufferElement, VertexesLayout, EBO, VAO, VBO};
 use shader::Shader;
@@ -24,11 +26,11 @@ pub struct Renderer {
     cache_uniform_location: HashMap<String, i32>,
 }
 impl Renderer {
-    pub fn new(width: f32, height: f32, shader_src_path: &str) -> Self {
+    pub fn new(width: f32, height: f32, shader: Shader) -> Self {
         Self {
             width,
             height,
-            shader: Shader::new(shader_src_path),
+            shader,
             cache_uniform_location: HashMap::new(),
         }
     }
@@ -66,7 +68,7 @@ impl Renderer {
         y: f32,
         width: f32,
         height: f32,
-        img_path: &str,
+        img_name: &str,
         img_kind: ImgKind,
     ) {
         let mut vertices = Vec::new();
@@ -84,7 +86,7 @@ impl Renderer {
             .layout(MyTypes::FLOAT, 3)
             .layout(MyTypes::FLOAT, 3)
             .layout(MyTypes::FLOAT, 2)
-            .texture(img_path, img_kind)
+            .texture(img_name, img_kind)
             .build();
         self.draw_object(&img);
     }
@@ -209,8 +211,9 @@ impl RenderObjectBuilder {
         self
     }
 
-    fn texture(mut self, path: &str, img_kind: ImgKind) -> Self {
-        self.texture = Some(Texture::new(path, img_kind));
+    fn texture(mut self, name: &str, img_kind: ImgKind) -> Self {
+        let mut res = ResourcesManager::new();
+        self.texture = res.load_texture(name, img_kind);
         self.texture.as_ref().unwrap().unbind();
         self
     }

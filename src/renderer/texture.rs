@@ -1,16 +1,15 @@
 use crate::renderer::ImgKind;
 use gl::types::*;
+use image::DynamicImage;
 use std::os::raw::c_void;
-use std::path::Path;
 
+#[derive(Clone)]
 pub struct Texture {
     pub id: u32,
 }
 impl Texture {
-    pub fn new(path: &str, kind: ImgKind) -> Self {
-        let img_orig = image::open(&Path::new(path)).expect("Failed to load an image");
-        let img = img_orig.flipv();
-        let img_bytes = img.as_bytes();
+    pub fn new(image: DynamicImage, kind: ImgKind) -> Self {
+        let img_bytes = image.as_bytes();
 
         let mut id = 0;
         unsafe {
@@ -32,8 +31,8 @@ impl Texture {
                     ImgKind::JPEG => gl::RGB,
                     ImgKind::JPG => gl::RGB,
                 } as i32,
-                img.width() as i32,
-                img.height() as i32,
+                image.width() as i32,
+                image.height() as i32,
                 0,
                 match kind {
                     ImgKind::PNG => gl::RGBA,

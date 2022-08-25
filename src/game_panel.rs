@@ -1,5 +1,6 @@
 use std::sync::mpsc::Receiver;
 
+use crate::renderer::utils::ResourcesManager;
 use crate::renderer::Renderer;
 use gl::types::*;
 use glfw::{self, Glfw};
@@ -34,17 +35,14 @@ impl GamePanel {
         // ---------------------------------------
         gl::load_with(|symbol| window.get_proc_address(symbol) as *const _);
 
+        let shader = ResourcesManager::new().load_shader("basic.shader").unwrap();
         Self {
             width,
             height,
             window,
             events,
             glfw,
-            renderer: Renderer::new(
-                width as f32,
-                height as f32,
-                "resources/shaders/basic.shader",
-            ),
+            renderer: Renderer::new(width as f32, height as f32, shader),
         }
     }
 
