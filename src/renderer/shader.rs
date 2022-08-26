@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use std::ffi::CString;
 use std::ptr;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Shader {
     pub id: u32,
     cache_uniform_location: HashMap<String, i32>,

@@ -22,26 +22,25 @@ impl ResourcesManager {
             cached_shaders: HashMap::new(),
         }
     }
-    pub fn load_shader(&mut self, name: &str) -> Shader {
-        if let Some(shader) = self.cached_shaders.get(name) {
-            return shader.clone();
+    pub fn load_shader(&mut self, name: &str) -> &mut Shader {
+        if self.cached_shaders.contains_key(name) {
+            return self.cached_shaders.get_mut(name).unwrap();
         }
         let shader_source = self.parse_shader(format!("{}/{}", SHADERS_PATH, name).as_str());
         let new_shader = Shader::new(shader_source);
-        self.cached_shaders
-            .insert(name.to_string(), new_shader.clone());
-        new_shader
+        self.cached_shaders.insert(name.to_string(), new_shader);
+        self.cached_shaders.get_mut(name).unwrap()
     }
 
-    pub fn load_texture(&mut self, name: &str, image_kind: ImgKind) -> Option<Texture> {
-        if let Some(texture) = self.cached_textures.get(name) {
-            return Some(texture.clone());
+    pub fn load_texture(&mut self, name: &str, image_kind: ImgKind) -> &mut Texture {
+        if self.cached_textures.contains_key(name) {
+            return self.cached_textures.get_mut(name).unwrap();
         }
         let image = self.load_image_from_file(name);
         let texture = Texture::new(image, image_kind);
         self.cached_textures
             .insert(name.to_string(), texture.clone());
-        Some(texture)
+        self.cached_textures.get_mut(name).unwrap()
     }
 
     fn load_image_from_file(&self, name: &str) -> DynamicImage {
@@ -50,10 +49,9 @@ impl ResourcesManager {
         img_orig.flipv()
     }
 
-    fn parse_shader(&self, path: &str) -> (String, String) {
+    fn parse_shader(&mut self, path: &str) -> (String, String) {
         let mut kind = -1;
-        let mut vertex = String::new();
-        let mut fragment = String::new();
+        let (mut vertex, mut fragment) = (String::new(), String::new());
         let contents = fs::read_to_string(&path).expect("Should have been able to read the file");
         for line in contents.lines() {
             if line.contains("#shader") {

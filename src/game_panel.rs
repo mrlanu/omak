@@ -46,6 +46,13 @@ impl GamePanel {
     }
 
     pub fn run(&mut self, runnable: &mut impl Runnable) {
+        let projection: nalgebra_glm::Mat4 =
+            nalgebra_glm::ortho(0.0, self.width as f32, self.height as f32, 0.0, -1.0, 1.0);
+        let shader = self.renderer.res_manager.load_shader("sprite.shader");
+        shader.activate();
+        shader.set_uniform_1i("image", 0);
+        shader.set_matrix4("projection", &projection);
+
         while !self.window.should_close() {
             self.process_events();
 

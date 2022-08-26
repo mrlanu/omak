@@ -36,17 +36,6 @@ impl MyGame {
         //     &self.player.image_path,
         //     ImgKind::PNG,
         // )
-        let projection: nalgebra_glm::Mat4 = nalgebra_glm::ortho(
-            0.0,
-            game_panel.width as f32,
-            game_panel.height as f32,
-            0.0,
-            -1.0,
-            1.0,
-        );
-        let mut shader = game_panel.renderer.res_manager.load_shader("sprite.shader");
-        shader.set_uniform_1i("image", 0);
-        shader.set_matrix4("projection", &projection);
         game_panel.renderer.draw_sprite(
             nalgebra_glm::vec2(200.0, 200.0),
             nalgebra_glm::vec2(40.0, 40.0),

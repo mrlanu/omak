@@ -47,7 +47,7 @@ impl Renderer {
     }
 
     pub fn draw_object(&mut self, obj: &RenderObject) {
-        self.res_manager.load_shader("basic.shader").activate();
+        // self.res_manager.load_shader("sprite.shader").activate();
         obj.vao.bind();
         obj.texture.as_ref().unwrap().bind();
         unsafe {
@@ -111,8 +111,7 @@ impl Renderer {
             .texture("my_s.png", ImgKind::PNG)
             .build();
 
-        let mut shader = self.res_manager.load_shader("sprite.shader");
-        shader.activate();
+        self.res_manager.load_shader("sprite.shader").activate();
 
         let mut model: nalgebra_glm::Mat4 = nalgebra_glm::mat4(
             1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0,
@@ -125,10 +124,17 @@ impl Renderer {
         ); // move origin back
 
         model = nalgebra_glm::scale(&model, &nalgebra_glm::vec3(size.x, size.y, 1.0));
-        shader.set_matrix4("model", &model);
+        self.res_manager
+            .load_shader("sprite.shader")
+            .set_matrix4("model", &model);
 
         // render textured quad
-        shader.set_vector_3f("spriteColor", color.x, color.y, color.z);
+        self.res_manager.load_shader("sprite.shader").set_vector_3f(
+            "spriteColor",
+            color.x,
+            color.y,
+            color.z,
+        );
         // unsafe {
         //     gl::ActiveTexture(gl::TEXTURE0);
         //     texture.bind();
@@ -228,7 +234,7 @@ impl RenderObjectBuilder {
 
     fn texture(mut self, name: &str, img_kind: ImgKind) -> Self {
         let mut res = ResourcesManager::new();
-        self.texture = res.load_texture(name, img_kind);
+        self.texture = Some(res.load_texture(name, img_kind).clone());
         self.texture.as_ref().unwrap().unbind();
         self
     }
