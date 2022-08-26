@@ -22,19 +22,15 @@ impl ResourcesManager {
             cached_shaders: HashMap::new(),
         }
     }
-    pub fn load_shader(&mut self, name: &str) -> Option<Shader> {
+    pub fn load_shader(&mut self, name: &str) -> Shader {
         if let Some(shader) = self.cached_shaders.get(name) {
-            return Some(shader.clone());
+            return shader.clone();
         }
-        if let Some(shader_source) =
-            self.parse_shader(format!("{}/{}", SHADERS_PATH, name).as_str())
-        {
-            let new_shader = Shader::new(shader_source);
-            self.cached_shaders
-                .insert(name.to_string(), new_shader.clone());
-            return Some(new_shader);
-        }
-        None
+        let shader_source = self.parse_shader(format!("{}/{}", SHADERS_PATH, name).as_str());
+        let new_shader = Shader::new(shader_source);
+        self.cached_shaders
+            .insert(name.to_string(), new_shader.clone());
+        new_shader
     }
 
     pub fn load_texture(&mut self, name: &str, image_kind: ImgKind) -> Option<Texture> {
@@ -54,7 +50,7 @@ impl ResourcesManager {
         img_orig.flipv()
     }
 
-    fn parse_shader(&self, path: &str) -> Option<(String, String)> {
+    fn parse_shader(&self, path: &str) -> (String, String) {
         let mut kind = -1;
         let mut vertex = String::new();
         let mut fragment = String::new();
@@ -80,6 +76,6 @@ impl ResourcesManager {
                 }
             }
         }
-        Some((vertex, fragment))
+        (vertex, fragment)
     }
 }

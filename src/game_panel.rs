@@ -35,16 +35,13 @@ impl GamePanel {
         // ---------------------------------------
         gl::load_with(|symbol| window.get_proc_address(symbol) as *const _);
 
-        let shader = ResourcesManager::new()
-            .load_shader("sprite.shader")
-            .unwrap();
         Self {
             width,
             height,
             window,
             events,
             glfw,
-            renderer: Renderer::new(width as f32, height as f32, shader),
+            renderer: Renderer::new(width as f32, height as f32),
         }
     }
 

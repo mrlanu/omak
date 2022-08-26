@@ -1,10 +1,12 @@
 use gl::types::*;
+use std::collections::HashMap;
 use std::ffi::CString;
 use std::ptr;
 
 #[derive(Clone)]
 pub struct Shader {
     pub id: u32,
+    cache_uniform_location: HashMap<String, i32>,
 }
 
 impl Shader {
@@ -31,7 +33,10 @@ impl Shader {
             gl::DeleteShader(vertex_shader);
             gl::DeleteShader(fragment_shader);
         }
-        Self { id }
+        Self {
+            id,
+            cache_uniform_location: HashMap::new(),
+        }
     }
 
     pub fn activate(&self) {
@@ -43,6 +48,54 @@ impl Shader {
     pub fn delete(&self) {
         unsafe {
             gl::DeleteProgram(self.id);
+        }
+    }
+
+    pub fn set_uniform_4f(&mut self, name: &str, v0: f32, v1: f32, v2: f32, v3: f32) {
+        unsafe {
+            gl::Uniform4f(self.get_uniform_location(name), v0, v1, v2, v3);
+        }
+    }
+
+    pub fn set_uniform_1i(&mut self, name: &str, v: i32) {
+        unsafe {
+            gl::Uniform1i(self.get_uniform_location(name), v);
+        }
+    }
+
+    pub fn set_uniform_1f(&mut self, name: &str, v: f32) {
+        unsafe {
+            gl::Uniform1f(self.get_uniform_location(name), v);
+        }
+    }
+
+    pub fn set_vector_3f(&mut self, name: &str, v0: f32, v1: f32, v2: f32) {
+        unsafe {
+            gl::Uniform3f(self.get_uniform_location(name), v0, v1, v2);
+        }
+    }
+
+    pub fn set_matrix4(&mut self, name: &str, matrix: &nalgebra_glm::Mat4) {
+        unsafe {
+            gl::UniformMatrix4fv(self.get_uniform_location(name), 1, 0, matrix.as_ptr());
+        }
+    }
+
+    fn get_uniform_location(&mut self, name: &str) -> i32 {
+        if self.cache_uniform_location.get(name).is_some() {
+            return self.cache_uniform_location.get(name).unwrap().clone();
+        }
+        let var_name = CString::new(name.as_bytes()).unwrap();
+        let location;
+        unsafe {
+            location = gl::GetUniformLocation(self.id, var_name.as_ptr());
+            if location == -1 {
+                println!("Uniform {} doesnt exist!", name);
+            }
+            self.cache_uniform_location
+                .insert(name.to_string(), location);
+            println!("Map {:?}", self.cache_uniform_location);
+            location
         }
     }
 }

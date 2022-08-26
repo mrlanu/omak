@@ -1,6 +1,7 @@
 use omak::game_panel::{GamePanel, Runnable};
 use omak::renderer::texture::Texture;
-use omak::renderer::ImgKind;
+use omak::renderer::utils::ResourcesManager;
+use omak::renderer::{ImgKind, Renderer};
 
 fn main() {
     GamePanel::new(640, 400).run(&mut MyGame::new());
@@ -43,8 +44,9 @@ impl MyGame {
             -1.0,
             1.0,
         );
-        game_panel.renderer.set_uniform_1i("image", 0);
-        game_panel.renderer.set_matrix4("projection", &projection);
+        let mut shader = game_panel.renderer.res_manager.load_shader("sprite.shader");
+        shader.set_uniform_1i("image", 0);
+        shader.set_matrix4("projection", &projection);
         game_panel.renderer.draw_sprite(
             nalgebra_glm::vec2(200.0, 200.0),
             nalgebra_glm::vec2(40.0, 40.0),

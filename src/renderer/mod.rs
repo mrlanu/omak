@@ -22,20 +22,19 @@ pub enum ImgKind {
 pub struct Renderer {
     pub width: f32,
     pub height: f32,
-    pub shader: Shader,
-    cache_uniform_location: HashMap<String, i32>,
+    pub res_manager: ResourcesManager,
 }
 impl Renderer {
-    pub fn new(width: f32, height: f32, shader: Shader) -> Self {
+    pub fn new(width: f32, height: f32) -> Self {
         Self {
             width,
             height,
-            shader,
-            cache_uniform_location: HashMap::new(),
+            res_manager: ResourcesManager::new(),
         }
     }
-    pub fn draw(&self, vao: &VAO, vbo: &VBO) {
-        self.shader.activate();
+    pub fn draw(&mut self, vao: &VAO, vbo: &VBO) {
+        // self.shader.activate();
+        self.res_manager.load_shader("sprite.shader").activate();
         vao.bind();
         unsafe {
             gl::DrawElements(
@@ -47,8 +46,8 @@ impl Renderer {
         }
     }
 
-    pub fn draw_object(&self, obj: &RenderObject) {
-        self.shader.activate();
+    pub fn draw_object(&mut self, obj: &RenderObject) {
+        self.res_manager.load_shader("basic.shader").activate();
         obj.vao.bind();
         obj.texture.as_ref().unwrap().bind();
         unsafe {
@@ -67,7 +66,7 @@ impl Renderer {
     }
 
     pub fn draw_image(
-        &self,
+        &mut self,
         x: f32,
         y: f32,
         width: f32,
@@ -112,7 +111,9 @@ impl Renderer {
             .texture("my_s.png", ImgKind::PNG)
             .build();
 
-        self.shader.activate();
+        let mut shader = self.res_manager.load_shader("sprite.shader");
+        shader.activate();
+
         let mut model: nalgebra_glm::Mat4 = nalgebra_glm::mat4(
             1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0,
         );
@@ -124,10 +125,10 @@ impl Renderer {
         ); // move origin back
 
         model = nalgebra_glm::scale(&model, &nalgebra_glm::vec3(size.x, size.y, 1.0));
-        self.set_matrix4("model", &model);
+        shader.set_matrix4("model", &model);
 
         // render textured quad
-        self.set_vector_3f("spriteColor", color.x, color.y, color.z);
+        shader.set_vector_3f("spriteColor", color.x, color.y, color.z);
         // unsafe {
         //     gl::ActiveTexture(gl::TEXTURE0);
         //     texture.bind();
@@ -152,54 +153,6 @@ impl Renderer {
             gl::GetIntegerv(gl::MAJOR_VERSION, &mut major);
             gl::GetIntegerv(gl::MINOR_VERSION, &mut minor);
             println!("Version: {}.{}", major, minor);
-        }
-    }
-
-    pub fn set_uniform_4f(&mut self, name: &str, v0: f32, v1: f32, v2: f32, v3: f32) {
-        unsafe {
-            gl::Uniform4f(self.get_uniform_location(name), v0, v1, v2, v3);
-        }
-    }
-
-    pub fn set_uniform_1i(&mut self, name: &str, v: i32) {
-        unsafe {
-            gl::Uniform1i(self.get_uniform_location(name), v);
-        }
-    }
-
-    pub fn set_uniform_1f(&mut self, name: &str, v: f32) {
-        unsafe {
-            gl::Uniform1f(self.get_uniform_location(name), v);
-        }
-    }
-
-    pub fn set_vector_3f(&mut self, name: &str, v0: f32, v1: f32, v2: f32) {
-        unsafe {
-            gl::Uniform3f(self.get_uniform_location(name), v0, v1, v2);
-        }
-    }
-
-    pub fn set_matrix4(&mut self, name: &str, matrix: &nalgebra_glm::Mat4) {
-        unsafe {
-            gl::UniformMatrix4fv(self.get_uniform_location(name), 1, 0, matrix.as_ptr());
-        }
-    }
-
-    fn get_uniform_location(&mut self, name: &str) -> i32 {
-        if self.cache_uniform_location.get(name).is_some() {
-            return self.cache_uniform_location.get(name).unwrap().clone();
-        }
-        let var_name = CString::new(name.as_bytes()).unwrap();
-        let location;
-        unsafe {
-            location = gl::GetUniformLocation(self.shader.id, var_name.as_ptr());
-            if location == -1 {
-                println!("Uniform {} doesnt exist!", name);
-            }
-            self.cache_uniform_location
-                .insert(name.to_string(), location);
-            println!("Map {:?}", self.cache_uniform_location);
-            location
         }
     }
 }
