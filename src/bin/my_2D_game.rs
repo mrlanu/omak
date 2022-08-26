@@ -1,4 +1,5 @@
 use omak::game_panel::{GamePanel, Runnable};
+use omak::renderer::texture::Texture;
 use omak::renderer::ImgKind;
 
 fn main() {
@@ -26,14 +27,30 @@ impl MyGame {
     fn update(&self) {}
 
     fn draw(&mut self, game_panel: &mut GamePanel) {
-        game_panel.renderer.draw_image(
-            self.player.x as f32,
-            self.player.y as f32,
-            self.player.width as f32,
-            self.player.height as f32,
-            &self.player.image_path,
-            ImgKind::PNG,
-        )
+        // game_panel.renderer.draw_image(
+        //     self.player.x as f32,
+        //     self.player.y as f32,
+        //     self.player.width as f32,
+        //     self.player.height as f32,
+        //     &self.player.image_path,
+        //     ImgKind::PNG,
+        // )
+        let projection: nalgebra_glm::Mat4 = nalgebra_glm::ortho(
+            0.0,
+            game_panel.width as f32,
+            game_panel.height as f32,
+            0.0,
+            -1.0,
+            1.0,
+        );
+        game_panel.renderer.set_uniform_1i("image", 0);
+        game_panel.renderer.set_matrix4("projection", &projection);
+        game_panel.renderer.draw_sprite(
+            nalgebra_glm::vec2(200.0, 200.0),
+            nalgebra_glm::vec2(40.0, 40.0),
+            0.0,
+            nalgebra_glm::vec3(1.0, 1.0, 1.0),
+        );
     }
 }
 

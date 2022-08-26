@@ -1,6 +1,6 @@
 mod gl_objects;
 mod shader;
-mod texture;
+pub mod texture;
 pub mod utils;
 
 use self::utils::ResourcesManager;
@@ -52,12 +52,16 @@ impl Renderer {
         obj.vao.bind();
         obj.texture.as_ref().unwrap().bind();
         unsafe {
-            gl::DrawElements(
-                gl::TRIANGLES,
-                obj.vbo.count as GLsizei,
-                gl::UNSIGNED_INT,
-                ptr::null(),
-            );
+            if obj.ebo.is_some() {
+                gl::DrawElements(
+                    gl::TRIANGLES,
+                    obj.vbo.count as GLsizei,
+                    gl::UNSIGNED_INT,
+                    ptr::null(),
+                );
+            } else {
+                gl::DrawArrays(gl::TRIANGLES, 0, obj.vbo.count as GLsizei);
+            }
         }
         obj.texture.as_ref().unwrap().unbind();
     }
@@ -89,6 +93,50 @@ impl Renderer {
             .texture(img_name, img_kind)
             .build();
         self.draw_object(&img);
+    }
+
+    pub fn draw_sprite(
+        &mut self,
+        position: nalgebra_glm::Vec2,
+        size: nalgebra_glm::Vec2,
+        rotate: f32,
+        color: nalgebra_glm::Vec3,
+    ) {
+        let sprite = RenderObjectBuilder::new()
+            .vertices(vec![
+                // pos      // tex
+                0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0,
+                1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 0.0,
+            ])
+            .layout(MyTypes::FLOAT, 4)
+            .texture("my_s.png", ImgKind::PNG)
+            .build();
+
+        self.shader.activate();
+        let mut model: nalgebra_glm::Mat4 = nalgebra_glm::mat4(
+            1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0,
+        );
+        model = nalgebra_glm::translate(&model, &nalgebra_glm::vec3(position.x, position.y, 0.0));
+        // model = nalgebra_glm::rotate(&model, *nalgebra_glm::radians(rotate), &nalgebra_glm::vec3(0.0, 0.0, 1.0)); // then rotatemodel
+        model = nalgebra_glm::translate(
+            &model,
+            &nalgebra_glm::vec3(-0.5 * size.x, -0.5 * size.y, 0.0),
+        ); // move origin back
+
+        model = nalgebra_glm::scale(&model, &nalgebra_glm::vec3(size.x, size.y, 1.0));
+        self.set_matrix4("model", &model);
+
+        // render textured quad
+        self.set_vector_3f("spriteColor", color.x, color.y, color.z);
+        // unsafe {
+        //     gl::ActiveTexture(gl::TEXTURE0);
+        //     texture.bind();
+        //
+        //     gl::BindVertexArray(sprite.vao.id);
+        //     gl::DrawArrays(gl::TRIANGLES, 0, 6);
+        //     gl::BindVertexArray(0);
+        // }
+        self.draw_object(&sprite);
     }
 
     pub fn clear(&self) {
@@ -125,6 +173,18 @@ impl Renderer {
         }
     }
 
+    pub fn set_vector_3f(&mut self, name: &str, v0: f32, v1: f32, v2: f32) {
+        unsafe {
+            gl::Uniform3f(self.get_uniform_location(name), v0, v1, v2);
+        }
+    }
+
+    pub fn set_matrix4(&mut self, name: &str, matrix: &nalgebra_glm::Mat4) {
+        unsafe {
+            gl::UniformMatrix4fv(self.get_uniform_location(name), 1, 0, matrix.as_ptr());
+        }
+    }
+
     fn get_uniform_location(&mut self, name: &str) -> i32 {
         if self.cache_uniform_location.get(name).is_some() {
             return self.cache_uniform_location.get(name).unwrap().clone();
@@ -149,15 +209,17 @@ pub struct RenderObject {
     _indices: Vec<i32>,
     vao: VAO,
     vbo: VBO,
-    ebo: EBO,
+    ebo: Option<EBO>,
     texture: Option<Texture>,
 }
 impl RenderObject {
     pub fn destroy(&mut self) {
         self.vao.delete();
         self.vbo.delete();
-        self.ebo.delete();
-        if self.texture.is_some() {
+        if let Some(_) = self.ebo {
+            self.ebo.as_mut().unwrap().delete();
+        }
+        if let Some(_) = self.texture {
             self.texture.as_mut().unwrap().delete();
         }
     }
@@ -222,15 +284,21 @@ impl RenderObjectBuilder {
         self.vao.link(&self.vbo.as_ref().unwrap(), &self.layouts);
         self.vao.unbind();
         self.vbo.as_ref().unwrap().unbind();
-        self.ebo.as_ref().unwrap().unbind();
+        if self.ebo.is_some() {
+            self.ebo.as_ref().unwrap().unbind();
+        }
 
         RenderObject {
             _vertices: self.vertices,
             _indices: self.indices,
             vao: self.vao,
             vbo: self.vbo.unwrap(),
-            ebo: self.ebo.unwrap(),
-            texture: self.texture,
+            ebo: if self.ebo.is_some() { self.ebo } else { None },
+            texture: if self.texture.is_some() {
+                self.texture
+            } else {
+                None
+            },
         }
     }
 }

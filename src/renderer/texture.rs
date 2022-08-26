@@ -43,6 +43,7 @@ impl Texture {
                 &img_bytes[0] as *const u8 as *const c_void,
             );
             gl::GenerateMipmap(gl::TEXTURE_2D);
+            gl::BindTexture(gl::TEXTURE_2D, 0);
         }
         Self { id }
     }

@@ -7,8 +7,8 @@ use glfw::{self, Glfw};
 use glfw::{Action, Context, Key, Window, WindowEvent};
 
 pub struct GamePanel {
-    width: u32,
-    height: u32,
+    pub width: u32,
+    pub height: u32,
     window: Window,
     events: Receiver<(f64, WindowEvent)>,
     glfw: Glfw,
@@ -35,7 +35,9 @@ impl GamePanel {
         // ---------------------------------------
         gl::load_with(|symbol| window.get_proc_address(symbol) as *const _);
 
-        let shader = ResourcesManager::new().load_shader("basic.shader").unwrap();
+        let shader = ResourcesManager::new()
+            .load_shader("sprite.shader")
+            .unwrap();
         Self {
             width,
             height,
