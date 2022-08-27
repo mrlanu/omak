@@ -1,6 +1,5 @@
 use std::sync::mpsc::Receiver;
 
-use crate::renderer::utils::ResourcesManager;
 use crate::renderer::Renderer;
 use gl::types::*;
 use glfw::{self, Glfw};
@@ -12,6 +11,7 @@ pub struct GamePanel {
     window: Window,
     events: Receiver<(f64, WindowEvent)>,
     glfw: Glfw,
+    pub keys: [bool; 1024],
     pub renderer: Renderer,
 }
 impl GamePanel {
@@ -41,6 +41,7 @@ impl GamePanel {
             window,
             events,
             glfw,
+            keys: [false; 1024],
             renderer: Renderer::new(width as f32, height as f32),
         }
     }
@@ -74,6 +75,12 @@ impl GamePanel {
                 WindowEvent::FramebufferSize(w, h) => unsafe { gl::Viewport(0, 0, w, h) },
                 WindowEvent::Key(Key::Escape, _, Action::Press, _) => {
                     self.window.set_should_close(true)
+                }
+                WindowEvent::Key(_, KEY, Action::Press, _) => {
+                    self.keys[KEY as usize] = true;
+                }
+                WindowEvent::Key(_, KEY, Action::Release, _) => {
+                    self.keys[KEY as usize] = false;
                 }
                 _ => {}
             }

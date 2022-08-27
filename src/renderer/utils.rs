@@ -46,7 +46,8 @@ impl ResourcesManager {
     fn load_image_from_file(&self, name: &str) -> DynamicImage {
         let img_orig = image::open(&Path::new(format!("{}/{}", IMAGES_PATH, name).as_str()))
             .expect("Failed to load an image");
-        img_orig.flipv()
+        // img_orig.flipv()
+        img_orig
     }
 
     fn parse_shader(&mut self, path: &str) -> (String, String) {

@@ -1,7 +1,8 @@
-use omak::game_panel::{GamePanel, Runnable};
-use omak::renderer::texture::Texture;
-use omak::renderer::utils::ResourcesManager;
-use omak::renderer::{ImgKind, Renderer};
+use nalgebra_glm as glm;
+use omak::{
+    game_panel::{GamePanel, Runnable},
+    renderer::Renderer,
+};
 
 fn main() {
     GamePanel::new(640, 400).run(&mut MyGame::new());
@@ -13,7 +14,7 @@ pub struct MyGame {
 
 impl Runnable for MyGame {
     fn run(&mut self, panel: &mut GamePanel) {
-        self.update();
+        self.update(panel);
         self.draw(panel);
     }
 }
@@ -21,27 +22,16 @@ impl Runnable for MyGame {
 impl MyGame {
     pub fn new() -> Self {
         Self {
-            player: Player::new(300, 200, 40, 40, "my_s.png"),
+            player: Player::new(300, 200, 32, 32, "boy_down_1.png"),
         }
     }
 
-    fn update(&self) {}
+    fn update(&mut self, game_panel: &mut GamePanel) {
+        self.player.update(game_panel);
+    }
 
     fn draw(&mut self, game_panel: &mut GamePanel) {
-        // game_panel.renderer.draw_image(
-        //     self.player.x as f32,
-        //     self.player.y as f32,
-        //     self.player.width as f32,
-        //     self.player.height as f32,
-        //     &self.player.image_path,
-        //     ImgKind::PNG,
-        // )
-        game_panel.renderer.draw_sprite(
-            nalgebra_glm::vec2(200.0, 200.0),
-            nalgebra_glm::vec2(40.0, 40.0),
-            0.0,
-            nalgebra_glm::vec3(1.0, 1.0, 1.0),
-        );
+        self.player.draw(&mut game_panel.renderer);
     }
 }
 
@@ -50,16 +40,40 @@ pub struct Player {
     y: i32,
     width: i32,
     height: i32,
-    image_path: String,
+    image: String,
 }
 impl Player {
-    pub fn new(x: i32, y: i32, width: i32, height: i32, image_path: &str) -> Self {
+    pub fn new(x: i32, y: i32, width: i32, height: i32, image: &str) -> Self {
         Self {
             x,
             y,
             width,
             height,
-            image_path: image_path.to_string(),
+            image: image.to_string(),
         }
+    }
+    fn update(&mut self, game_panel: &mut GamePanel) {
+        if game_panel.keys[glfw::Key::Up.get_scancode().unwrap() as usize] {
+            self.y -= 5;
+        }
+        if game_panel.keys[glfw::Key::Down.get_scancode().unwrap() as usize] {
+            self.y += 5;
+        }
+        if game_panel.keys[glfw::Key::Left.get_scancode().unwrap() as usize] {
+            self.x -= 5;
+        }
+        if game_panel.keys[glfw::Key::Right.get_scancode().unwrap() as usize] {
+            self.x += 5;
+        }
+    }
+
+    pub fn draw(&self, renderer: &mut Renderer) {
+        renderer.draw_image(
+            glm::vec2(self.x as f32, self.y as f32),
+            glm::vec2(self.width as f32, self.height as f32),
+            0.0,
+            glm::vec3(1.0, 1.0, 1.0),
+            &self.image,
+        );
     }
 }

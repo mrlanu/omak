@@ -6,9 +6,7 @@ pub mod utils;
 use self::utils::ResourcesManager;
 use gl::types::*;
 use gl_objects::{MyTypes, VertexBufferElement, VertexesLayout, EBO, VAO, VBO};
-use shader::Shader;
-use std::collections::HashMap;
-use std::ffi::CString;
+use nalgebra_glm as glm;
 use std::mem;
 use std::ptr;
 use texture::Texture;
@@ -32,21 +30,8 @@ impl Renderer {
             res_manager: ResourcesManager::new(),
         }
     }
-    pub fn draw(&mut self, vao: &VAO, vbo: &VBO) {
-        // self.shader.activate();
-        self.res_manager.load_shader("sprite.shader").activate();
-        vao.bind();
-        unsafe {
-            gl::DrawElements(
-                gl::TRIANGLES,
-                vbo.count as GLsizei,
-                gl::UNSIGNED_INT,
-                ptr::null(),
-            );
-        }
-    }
 
-    pub fn draw_object(&mut self, obj: &RenderObject) {
+    fn draw_object(&mut self, obj: &RenderObject) {
         // self.res_manager.load_shader("sprite.shader").activate();
         obj.vao.bind();
         obj.texture.as_ref().unwrap().bind();
@@ -67,39 +52,11 @@ impl Renderer {
 
     pub fn draw_image(
         &mut self,
-        x: f32,
-        y: f32,
-        width: f32,
-        height: f32,
-        img_name: &str,
-        img_kind: ImgKind,
-    ) {
-        let mut vertices = Vec::new();
-        let gl_x1 = ((x + width) - self.width / 2.0) * (2.0 / self.width);
-        let gl_y1 = ((y + height) - self.height / 2.0) * (2.0 / self.height);
-        let gl_x2 = (x - self.width / 2.0) * (2.0 / self.width);
-        let gl_y2 = (y - self.height / 2.0) * (2.0 / self.height);
-        vertices.append(&mut vec![
-            gl_x2, gl_y1, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, gl_x2, gl_y2, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0,
-            gl_x1, gl_y2, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, gl_x1, gl_y1, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0,
-        ]);
-        let img = RenderObjectBuilder::new()
-            .vertices(vertices)
-            .indices(vec![0, 1, 3, 1, 2, 3])
-            .layout(MyTypes::FLOAT, 3)
-            .layout(MyTypes::FLOAT, 3)
-            .layout(MyTypes::FLOAT, 2)
-            .texture(img_name, img_kind)
-            .build();
-        self.draw_object(&img);
-    }
-
-    pub fn draw_sprite(
-        &mut self,
-        position: nalgebra_glm::Vec2,
-        size: nalgebra_glm::Vec2,
+        position: glm::Vec2,
+        size: glm::Vec2,
         rotate: f32,
-        color: nalgebra_glm::Vec3,
+        color: glm::Vec3,
+        img_name: &str,
     ) {
         let sprite = RenderObjectBuilder::new()
             .vertices(vec![
@@ -108,22 +65,15 @@ impl Renderer {
                 1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 0.0,
             ])
             .layout(MyTypes::FLOAT, 4)
-            .texture("my_s.png", ImgKind::PNG)
+            .texture(img_name, ImgKind::PNG)
             .build();
 
-        self.res_manager.load_shader("sprite.shader").activate();
-
-        let mut model: nalgebra_glm::Mat4 = nalgebra_glm::mat4(
-            1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0,
-        );
-        model = nalgebra_glm::translate(&model, &nalgebra_glm::vec3(position.x, position.y, 0.0));
+        let mut model = glm::Mat4x4::from_diagonal_element(1.0);
+        model = glm::translate(&model, &glm::vec3(position.x, position.y, 0.0));
         // model = nalgebra_glm::rotate(&model, *nalgebra_glm::radians(rotate), &nalgebra_glm::vec3(0.0, 0.0, 1.0)); // then rotatemodel
-        model = nalgebra_glm::translate(
-            &model,
-            &nalgebra_glm::vec3(-0.5 * size.x, -0.5 * size.y, 0.0),
-        ); // move origin back
-
-        model = nalgebra_glm::scale(&model, &nalgebra_glm::vec3(size.x, size.y, 1.0));
+        model = glm::translate(&model, &glm::vec3(-0.5 * size.x, -0.5 * size.y, 0.0)); // move
+                                                                                       // origin backi
+        model = glm::scale(&model, &glm::vec3(size.x, size.y, 1.0));
         self.res_manager
             .load_shader("sprite.shader")
             .set_matrix4("model", &model);
@@ -135,14 +85,6 @@ impl Renderer {
             color.y,
             color.z,
         );
-        // unsafe {
-        //     gl::ActiveTexture(gl::TEXTURE0);
-        //     texture.bind();
-        //
-        //     gl::BindVertexArray(sprite.vao.id);
-        //     gl::DrawArrays(gl::TRIANGLES, 0, 6);
-        //     gl::BindVertexArray(0);
-        // }
         self.draw_object(&sprite);
     }
 
