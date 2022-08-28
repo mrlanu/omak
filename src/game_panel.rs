@@ -31,7 +31,7 @@ impl GamePanel {
         window.make_current();
         window.set_key_polling(true);
         window.set_framebuffer_size_polling(true);
-
+        // glfw.set_swap_interval(glfw::SwapInterval::None);
         // ---------------------------------------
         gl::load_with(|symbol| window.get_proc_address(symbol) as *const _);
 
@@ -47,14 +47,18 @@ impl GamePanel {
     }
 
     pub fn run(&mut self, runnable: &mut impl Runnable) {
-        let projection: nalgebra_glm::Mat4 =
-            nalgebra_glm::ortho(0.0, self.width as f32, self.height as f32, 0.0, -1.0, 1.0);
-        let shader = self.renderer.res_manager.load_shader("sprite.shader");
-        shader.activate();
-        shader.set_uniform_1i("image", 0);
-        shader.set_matrix4("projection", &projection);
+        self.init();
+        let mut prev_time = self.glfw.get_time();
+        let mut frame_count = 0;
 
         while !self.window.should_close() {
+            let current_time = self.glfw.get_time();
+            frame_count += 1;
+            if current_time - prev_time >= 1.0 {
+                println!("FPS: {}", frame_count);
+                frame_count = 0;
+                prev_time = current_time;
+            }
             self.process_events();
 
             //--------------------------
@@ -67,6 +71,15 @@ impl GamePanel {
             self.window.swap_buffers();
             self.glfw.poll_events();
         }
+    }
+
+    fn init(&mut self) {
+        let projection: nalgebra_glm::Mat4 =
+            nalgebra_glm::ortho(0.0, self.width as f32, self.height as f32, 0.0, -1.0, 1.0);
+        let shader = self.renderer.res_manager.load_shader("sprite.shader");
+        shader.activate();
+        shader.set_uniform_1i("image", 0);
+        shader.set_matrix4("projection", &projection);
     }
 
     fn process_events(&mut self) {
