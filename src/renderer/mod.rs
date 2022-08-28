@@ -65,7 +65,7 @@ impl Renderer {
                 1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 0.0,
             ])
             .layout(MyTypes::FLOAT, 4)
-            .texture(img_name, ImgKind::PNG)
+            .texture(img_name, ImgKind::PNG, &mut self.res_manager)
             .build();
 
         let mut model = glm::Mat4x4::from_diagonal_element(1.0);
@@ -174,9 +174,13 @@ impl RenderObjectBuilder {
         self
     }
 
-    fn texture(mut self, name: &str, img_kind: ImgKind) -> Self {
-        let mut res = ResourcesManager::new();
-        self.texture = Some(res.load_texture(name, img_kind).clone());
+    fn texture(
+        mut self,
+        name: &str,
+        img_kind: ImgKind,
+        res_manager: &mut ResourcesManager,
+    ) -> Self {
+        self.texture = Some(res_manager.load_texture(name, img_kind).clone());
         self.texture.as_ref().unwrap().unbind();
         self
     }

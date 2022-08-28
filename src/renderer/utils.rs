@@ -37,9 +37,8 @@ impl ResourcesManager {
             return self.cached_textures.get_mut(name).unwrap();
         }
         let image = self.load_image_from_file(name);
-        let texture = Texture::new(image, image_kind);
         self.cached_textures
-            .insert(name.to_string(), texture.clone());
+            .insert(name.to_string(), Texture::new(image, image_kind));
         self.cached_textures.get_mut(name).unwrap()
     }
 
