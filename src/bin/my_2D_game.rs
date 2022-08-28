@@ -8,6 +8,8 @@ fn main() {
     GamePanel::new(640, 400).run(&mut MyGame::new());
 }
 
+//--------------------------------------------------------
+
 pub struct MyGame {
     player: Player,
 }
@@ -35,11 +37,16 @@ impl MyGame {
     }
 }
 
+//---------------------------------------------------------
+
 pub struct Player {
     x: i32,
     y: i32,
     width: i32,
     height: i32,
+    velocity: i32,
+    sprite_counter: i32,
+    sprite_num: i32,
     image: String,
 }
 impl Player {
@@ -49,21 +56,58 @@ impl Player {
             y,
             width,
             height,
+            velocity: 2,
+            sprite_counter: 0,
+            sprite_num: 0,
             image: image.to_string(),
         }
     }
     fn update(&mut self, game_panel: &mut GamePanel) {
+        self.sprite_counter += 1;
+        if self.sprite_counter > 10 {
+            if self.sprite_num == 1 {
+                self.sprite_num = 2;
+            } else {
+                self.sprite_num = 1;
+            }
+            self.sprite_counter = 0;
+        }
+        self.handle_keys_events(game_panel);
+    }
+
+    fn handle_keys_events(&mut self, game_panel: &mut GamePanel) {
         if game_panel.keys[glfw::Key::Up.get_scancode().unwrap() as usize] {
-            self.y -= 5;
+            if self.sprite_num == 1 {
+                self.image = "boy/boy_up_1.png".to_string();
+            } else {
+                self.image = "boy/boy_up_2.png".to_string();
+            }
+            self.y -= self.velocity;
         }
         if game_panel.keys[glfw::Key::Down.get_scancode().unwrap() as usize] {
-            self.y += 5;
+            if self.sprite_num == 1 {
+                self.image = "boy/boy_down_1.png".to_string();
+            } else {
+                self.image = "boy/boy_down_2.png".to_string();
+            }
+            self.y += self.velocity;
         }
         if game_panel.keys[glfw::Key::Left.get_scancode().unwrap() as usize] {
-            self.x -= 5;
+            if self.sprite_num == 1 {
+                self.image = "boy/boy_left_1.png".to_string();
+            } else {
+                self.image = "boy/boy_left_2.png".to_string();
+            }
+            self.x -= self.velocity;
         }
         if game_panel.keys[glfw::Key::Right.get_scancode().unwrap() as usize] {
-            self.x += 5;
+            if self.sprite_num == 1 {
+                self.image = "boy/boy_right_1.png".to_string();
+            } else {
+                self.image = "boy/boy_right_2.png".to_string();
+            }
+
+            self.x += self.velocity;
         }
     }
 
