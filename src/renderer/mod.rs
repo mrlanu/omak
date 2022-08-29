@@ -70,9 +70,8 @@ impl Renderer {
 
         let mut model = glm::Mat4x4::from_diagonal_element(1.0);
         model = glm::translate(&model, &glm::vec3(position.x, position.y, 0.0));
-        // model = nalgebra_glm::rotate(&model, *nalgebra_glm::radians(rotate), &nalgebra_glm::vec3(0.0, 0.0, 1.0)); // then rotatemodel
+        model = glm::rotate(&model, rotate, &glm::vec3(0.0, 0.0, 1.0)); // then rotatemodel
         model = glm::translate(&model, &glm::vec3(-0.5 * size.x, -0.5 * size.y, 0.0)); // move
-                                                                                       // origin backi
         model = glm::scale(&model, &glm::vec3(size.x, size.y, 1.0));
         self.res_manager
             .load_shader("sprite.shader")
