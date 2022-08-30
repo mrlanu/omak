@@ -1,11 +1,11 @@
 use nalgebra_glm as glm;
 use omak::{
-    game_panel::{GamePanel, Runnable},
+    game_panel::{GamePanel, Runnable, WindowGlfw},
     renderer::Renderer,
 };
 
 fn main() {
-    GamePanel::new(640, 400).run(&mut MyGame::new());
+    WindowGlfw::build(640, 400).run(&mut MyGame::new());
 }
 
 //--------------------------------------------------------
@@ -15,7 +15,7 @@ pub struct MyGame {
 }
 
 impl Runnable for MyGame {
-    fn run(&mut self, panel: &mut GamePanel) {
+    fn run(&mut self, panel: &mut impl GamePanel) {
         self.update(panel);
         self.draw(panel);
     }
@@ -28,12 +28,12 @@ impl MyGame {
         }
     }
 
-    fn update(&mut self, game_panel: &mut GamePanel) {
+    fn update(&mut self, game_panel: &mut impl GamePanel) {
         self.player.update(game_panel);
     }
 
-    fn draw(&mut self, game_panel: &mut GamePanel) {
-        self.player.draw(&mut game_panel.renderer);
+    fn draw(&mut self, game_panel: &mut impl GamePanel) {
+        self.player.draw(&mut game_panel.get_renderer());
     }
 }
 
@@ -62,7 +62,7 @@ impl Player {
             image: image.to_string(),
         }
     }
-    fn update(&mut self, game_panel: &mut GamePanel) {
+    fn update(&mut self, game_panel: &mut impl GamePanel) {
         self.sprite_counter += 1;
         if self.sprite_counter > 10 {
             if self.sprite_num == 1 {
@@ -75,8 +75,8 @@ impl Player {
         self.handle_keys_events(game_panel);
     }
 
-    fn handle_keys_events(&mut self, game_panel: &mut GamePanel) {
-        if game_panel.keys[glfw::Key::Up.get_scancode().unwrap() as usize] {
+    fn handle_keys_events(&mut self, game_panel: &mut impl GamePanel) {
+        if game_panel.get_keys()[glfw::Key::Up.get_scancode().unwrap() as usize] {
             if self.sprite_num == 1 {
                 self.image = "boy/boy_up_1.png".to_string();
             } else {
@@ -84,7 +84,7 @@ impl Player {
             }
             self.y -= self.velocity;
         }
-        if game_panel.keys[glfw::Key::Down.get_scancode().unwrap() as usize] {
+        if game_panel.get_keys()[glfw::Key::Down.get_scancode().unwrap() as usize] {
             if self.sprite_num == 1 {
                 self.image = "boy/boy_down_1.png".to_string();
             } else {
@@ -92,7 +92,7 @@ impl Player {
             }
             self.y += self.velocity;
         }
-        if game_panel.keys[glfw::Key::Left.get_scancode().unwrap() as usize] {
+        if game_panel.get_keys()[glfw::Key::Left.get_scancode().unwrap() as usize] {
             if self.sprite_num == 1 {
                 self.image = "boy/boy_left_1.png".to_string();
             } else {
@@ -100,7 +100,7 @@ impl Player {
             }
             self.x -= self.velocity;
         }
-        if game_panel.keys[glfw::Key::Right.get_scancode().unwrap() as usize] {
+        if game_panel.get_keys()[glfw::Key::Right.get_scancode().unwrap() as usize] {
             if self.sprite_num == 1 {
                 self.image = "boy/boy_right_1.png".to_string();
             } else {
