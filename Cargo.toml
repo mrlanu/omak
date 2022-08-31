@@ -6,9 +6,21 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+
+# GLFW3 bindings and idiomatic wrapper for Rust.
 glfw = "0.45"
+
+# OpenGL bindings
 gl = "0.14"
+
+# Provides basic filters and decoders for the most common image formats.
 image ="0.24"
+
+# A computer-graphics oriented API for nalgebra, inspired by the C++ GLM library.
 nalgebra-glm = "0.17"
+
+#Cross-platform window creation library.
 winit = "0.27"
+
+#Cross-platform OpenGL context provider.
 glutin = "0.29"
