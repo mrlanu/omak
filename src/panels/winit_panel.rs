@@ -1,3 +1,4 @@
+use crate::panels::common::{GamePanel, Runnable};
 use crate::renderer::Renderer;
 use gl::types::*;
 use winit::{
@@ -7,14 +8,33 @@ use winit::{
     window::{self as winit_window, Window, WindowBuilder},
 };
 
-pub struct GamePanel {
-    pub event_loop: EventLoop<()>,
+pub struct WindowWinit {
+    pub event_loop: Option<EventLoop<()>>,
     pub ctx: glutin::ContextWrapper<glutin::PossiblyCurrent, winit_window::Window>,
     pub renderer: Renderer,
+    pub keys: [bool; 1024],
 }
 
-impl GamePanel {
-    pub fn new(width: f32, height: f32) -> Self {
+impl WindowWinit {
+    fn init(&mut self) {
+        let window_size = self.ctx.window().inner_size();
+        let projection: nalgebra_glm::Mat4 = nalgebra_glm::ortho(
+            0.0,
+            window_size.width as f32,
+            window_size.height as f32,
+            0.0,
+            -1.0,
+            1.0,
+        );
+        let shader = self.renderer.res_manager.load_shader("sprite.shader");
+        shader.activate();
+        shader.set_uniform_1i("image", 0);
+        shader.set_matrix4("projection", &projection);
+    }
+}
+
+impl GamePanel for WindowWinit {
+    fn build(width: u32, height: u32) -> Self {
         let window_builder = WindowBuilder::new()
             .with_title("Omak")
             .with_inner_size(dpi::LogicalSize::new(width, height));
@@ -33,32 +53,18 @@ impl GamePanel {
 
             Self {
                 ctx,
-                event_loop,
-                renderer: Renderer::new(width, height),
+                event_loop: Some(event_loop),
+                renderer: Renderer::new(width as f32, height as f32),
+                keys: [true; 1024],
             }
         }
     }
 
-    fn init(&mut self) {
-        let window_size = self.ctx.window().inner_size();
-        let projection: nalgebra_glm::Mat4 = nalgebra_glm::ortho(
-            0.0,
-            window_size.width as f32,
-            window_size.height as f32,
-            0.0,
-            -1.0,
-            1.0,
-        );
-        let shader = self.renderer.res_manager.load_shader("sprite.shader");
-        shader.activate();
-        shader.set_uniform_1i("image", 0);
-        shader.set_matrix4("projection", &projection);
-    }
-
-    pub fn run(mut self, mut gamable: impl Gammable + 'static) {
+    fn run(mut self, mut runnable: impl Runnable + 'static) {
         self.init();
-
-        self.event_loop.run(move |event, _, control_flow| {
+        let event_loop = self.event_loop.unwrap();
+        self.event_loop = None;
+        event_loop.run(move |event, _, control_flow| {
             *control_flow = ControlFlow::Wait;
             match event {
                 Event::LoopDestroyed => {
@@ -74,7 +80,7 @@ impl GamePanel {
                 // Draw to the screen when requested
                 Event::RedrawRequested(_) => {
                     self.renderer.clear();
-                    gamable.run(&mut self.renderer);
+                    runnable.run(&mut self);
                     self.ctx.swap_buffers().unwrap();
                 }
 
@@ -100,8 +106,12 @@ impl GamePanel {
             }
         });
     }
-}
 
-pub trait Gammable {
-    fn run(&mut self, panel: &mut Renderer);
+    fn get_renderer(&mut self) -> &mut Renderer {
+        &mut self.renderer
+    }
+
+    fn get_keys(&self) -> &[bool] {
+        &self.keys[..]
+    }
 }

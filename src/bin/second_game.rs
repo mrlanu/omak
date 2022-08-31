@@ -1,18 +1,21 @@
 use nalgebra_glm as glm;
 use omak::{
+    panels::{
+        common::{GamePanel, Runnable},
+        winit_panel::WindowWinit,
+    },
     renderer::Renderer,
-    winit_panel::{GamePanel, Gammable},
 };
 
 fn main() {
-    let mut ok = GamePanel::new(600.0, 400.0).run(SecondGame);
+    WindowWinit::build(600, 400).run(SecondGame);
 }
 
 struct SecondGame;
 
-impl Gammable for SecondGame {
-    fn run(&mut self, renderer: &mut Renderer) {
-        renderer.draw_image(
+impl Runnable for SecondGame {
+    fn run(&mut self, panel: &mut impl GamePanel) {
+        panel.get_renderer().draw_image(
             glm::vec2(1700.0, 200.0),
             glm::vec2(96.0, 96.0),
             0.0,

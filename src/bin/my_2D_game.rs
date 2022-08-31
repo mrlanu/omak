@@ -1,11 +1,14 @@
 use nalgebra_glm as glm;
 use omak::{
-    game_panel::{GamePanel, Runnable, WindowGlfw},
+    panels::{
+        common::{GamePanel, Runnable},
+        glfw_panel::WindowGlfw,
+    },
     renderer::Renderer,
 };
 
 fn main() {
-    WindowGlfw::build(640, 400).run(&mut MyGame::new());
+    WindowGlfw::build(640, 400).run(MyGame::new());
 }
 
 //--------------------------------------------------------

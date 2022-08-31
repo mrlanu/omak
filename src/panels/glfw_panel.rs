@@ -1,20 +1,10 @@
 use std::sync::mpsc::Receiver;
 
+use crate::panels::common::{GamePanel, Runnable};
 use crate::renderer::Renderer;
 use gl::types::*;
 use glfw::{self, Glfw};
 use glfw::{Action, Context, Key, Window, WindowEvent};
-
-pub trait GamePanel {
-    fn build(width: u32, height: u32) -> Self;
-    fn run(self, runnable: &mut impl Runnable);
-    fn get_renderer(&mut self) -> &mut Renderer;
-    fn get_keys(&self) -> &[bool];
-}
-
-pub trait Runnable {
-    fn run(&mut self, panel: &mut impl GamePanel);
-}
 
 pub struct WindowGlfw {
     pub width: u32,
@@ -86,7 +76,7 @@ impl GamePanel for WindowGlfw {
         }
     }
 
-    fn run(mut self, runnable: &mut impl Runnable) {
+    fn run(mut self, mut runnable: impl Runnable) {
         self.init();
         let mut prev_time = self.glfw.get_time();
         let mut frame_count = 0;
