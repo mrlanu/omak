@@ -2,13 +2,16 @@ use nalgebra_glm as glm;
 use omak::{
     panels::{
         common::{GamePanel, Runnable},
-        glfw_panel::WindowGlfw,
+        winit_panel::WindowWinit,
     },
     renderer::Renderer,
 };
+use winit::event::VirtualKeyCode;
+
+//--------------------------------------------------------
 
 fn main() {
-    WindowGlfw::build(640, 400).run(MyGame::new());
+    WindowWinit::build(640, 400).run(MyGame::new());
 }
 
 //--------------------------------------------------------
@@ -27,7 +30,7 @@ impl Runnable for MyGame {
 impl MyGame {
     pub fn new() -> Self {
         Self {
-            player: Player::new(300, 200, 32, 32, "boy_down_1.png"),
+            player: Player::new(300, 200, 64, 64, "boy_down_1.png"),
         }
     }
 
@@ -59,7 +62,7 @@ impl Player {
             y,
             width,
             height,
-            velocity: 2,
+            velocity: 4,
             sprite_counter: 0,
             sprite_num: 0,
             image: image.to_string(),
@@ -79,7 +82,7 @@ impl Player {
     }
 
     fn handle_keys_events(&mut self, game_panel: &mut impl GamePanel) {
-        if game_panel.get_keys()[glfw::Key::Up.get_scancode().unwrap() as usize] {
+        if game_panel.get_keys()[VirtualKeyCode::Up as usize] {
             if self.sprite_num == 1 {
                 self.image = "boy/boy_up_1.png".to_string();
             } else {
@@ -87,7 +90,7 @@ impl Player {
             }
             self.y -= self.velocity;
         }
-        if game_panel.get_keys()[glfw::Key::Down.get_scancode().unwrap() as usize] {
+        if game_panel.get_keys()[VirtualKeyCode::Down as usize] {
             if self.sprite_num == 1 {
                 self.image = "boy/boy_down_1.png".to_string();
             } else {
@@ -95,7 +98,7 @@ impl Player {
             }
             self.y += self.velocity;
         }
-        if game_panel.get_keys()[glfw::Key::Left.get_scancode().unwrap() as usize] {
+        if game_panel.get_keys()[VirtualKeyCode::Left as usize] {
             if self.sprite_num == 1 {
                 self.image = "boy/boy_left_1.png".to_string();
             } else {
@@ -103,7 +106,7 @@ impl Player {
             }
             self.x -= self.velocity;
         }
-        if game_panel.get_keys()[glfw::Key::Right.get_scancode().unwrap() as usize] {
+        if game_panel.get_keys()[VirtualKeyCode::Right as usize] {
             if self.sprite_num == 1 {
                 self.image = "boy/boy_right_1.png".to_string();
             } else {
