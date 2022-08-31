@@ -12,8 +12,8 @@ pub struct WindowGlfw {
     window: Window,
     events: Receiver<(f64, WindowEvent)>,
     glfw: Glfw,
-    pub keys: [bool; 1024],
-    pub renderer: Renderer,
+    keys: [bool; 1024],
+    renderer: Renderer,
 }
 impl WindowGlfw {
     fn init(&mut self) {
@@ -33,6 +33,7 @@ impl WindowGlfw {
                     self.window.set_should_close(true)
                 }
                 WindowEvent::Key(_, KEY, Action::Press, _) => {
+                    self.keys = [false; 1024];
                     self.keys[KEY as usize] = true;
                 }
                 WindowEvent::Key(_, KEY, Action::Release, _) => {
