@@ -3,14 +3,14 @@ use crate::renderer::Renderer;
 use gl::types::*;
 use winit::{
     dpi,
-    event::{Event, VirtualKeyCode, WindowEvent},
+    event::{ElementState, Event, VirtualKeyCode as Key, WindowEvent},
     event_loop::{ControlFlow, EventLoop},
-    window::{self as winit_window, Window, WindowBuilder},
+    window::{Window, WindowBuilder},
 };
 
 pub struct WindowWinit {
     pub event_loop: Option<EventLoop<()>>,
-    pub ctx: glutin::ContextWrapper<glutin::PossiblyCurrent, winit_window::Window>,
+    pub ctx: glutin::ContextWrapper<glutin::PossiblyCurrent, Window>,
     pub renderer: Renderer,
     pub keys: [bool; 1024],
 }
@@ -31,6 +31,35 @@ impl WindowWinit {
         shader.set_uniform_1i("image", 0);
         shader.set_matrix4("projection", &projection);
     }
+
+    fn user_input(&mut self, event: &Event<()>) {
+        match event {
+            Event::WindowEvent { ref event, .. } => match event {
+                WindowEvent::KeyboardInput { input, .. } => {
+                    if let Some(keycode) = input.virtual_keycode {
+                        match input.state {
+                            ElementState::Pressed => {
+                                self.keys[keycode as usize] = true;
+                            }
+                            ElementState::Released => {
+                                self.keys[keycode as usize] = false;
+                            }
+                        }
+                    }
+                }
+                _ => {}
+            },
+
+            Event::DeviceEvent {
+                // event: DeviceEvent::MouseMotion { delta: (dx, dy) },
+                ..
+            } => {
+                // self.mouse_delta = (*dx as f32, *dy as f32);
+            }
+
+            _ => {}
+        }
+    }
 }
 
 impl GamePanel for WindowWinit {
@@ -46,16 +75,13 @@ impl GamePanel for WindowWinit {
                 .unwrap();
             let ctx = ctx.make_current().unwrap();
             gl::load_with(|symbol| ctx.get_proc_address(symbol) as *const _);
-            unsafe {
-                let window_size = ctx.window().inner_size();
-                gl::Viewport(0, 0, window_size.width as i32, window_size.height as i32);
-            }
-
+            let window_size = ctx.window().inner_size();
+            gl::Viewport(0, 0, window_size.width as i32, window_size.height as i32);
             Self {
                 ctx,
                 event_loop: Some(event_loop),
                 renderer: Renderer::new(width as f32, height as f32),
-                keys: [true; 1024],
+                keys: [false; 1024],
             }
         }
     }
@@ -65,7 +91,7 @@ impl GamePanel for WindowWinit {
         let event_loop = self.event_loop.unwrap();
         self.event_loop = None;
         event_loop.run(move |event, _, control_flow| {
-            *control_flow = ControlFlow::Wait;
+            *control_flow = ControlFlow::Poll;
             match event {
                 Event::LoopDestroyed => {
                     return;
@@ -95,7 +121,7 @@ impl GamePanel for WindowWinit {
 
                     WindowEvent::KeyboardInput { input, .. } => match input.virtual_keycode {
                         // Exit loop when Escape is pressed
-                        Some(VirtualKeyCode::Escape) => {
+                        Some(Key::Escape) => {
                             *control_flow = ControlFlow::Exit;
                         }
                         _ => {}
@@ -104,6 +130,7 @@ impl GamePanel for WindowWinit {
                 },
                 _ => (),
             }
+            self.user_input(&event);
         });
     }
 
