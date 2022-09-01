@@ -1,6 +1,7 @@
 use std::sync::mpsc::Receiver;
 
 use crate::panels::common::{GamePanel, Runnable};
+use crate::renderer::utils::ResourcesManager;
 use crate::renderer::Renderer;
 use gl::types::*;
 use glfw::{self, Glfw};
@@ -66,6 +67,7 @@ impl GamePanel for WindowGlfw {
         // ---------------------------------------
         gl::load_with(|symbol| window.get_proc_address(symbol) as *const _);
 
+        let res_manager = ResourcesManager::new();
         Self {
             width,
             height,
@@ -73,7 +75,7 @@ impl GamePanel for WindowGlfw {
             events,
             glfw,
             keys: [false; 1024],
-            renderer: Renderer::new(width as f32, height as f32),
+            renderer: Renderer::new(),
         }
     }
 

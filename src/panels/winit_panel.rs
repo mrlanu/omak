@@ -81,7 +81,7 @@ impl GamePanel for WindowWinit {
             Self {
                 ctx,
                 event_loop: Some(event_loop),
-                renderer: Renderer::new(width as f32, height as f32),
+                renderer: Renderer::new(),
                 keys: [false; 1024],
             }
         }
