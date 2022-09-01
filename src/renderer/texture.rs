@@ -9,6 +9,7 @@ pub struct Texture {
 }
 impl Texture {
     pub fn new(image: DynamicImage, kind: ImgKind) -> Self {
+        println!("New Texture");
         let img_bytes = image.as_bytes();
 
         let mut id = 0;

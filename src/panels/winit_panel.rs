@@ -9,10 +9,10 @@ use winit::{
 };
 
 pub struct WindowWinit {
-    pub event_loop: Option<EventLoop<()>>,
-    pub ctx: glutin::ContextWrapper<glutin::PossiblyCurrent, Window>,
-    pub renderer: Renderer,
-    pub keys: [bool; 1024],
+    event_loop: Option<EventLoop<()>>,
+    ctx: glutin::ContextWrapper<glutin::PossiblyCurrent, Window>,
+    renderer: Renderer,
+    keys: [bool; 1024],
 }
 
 impl WindowWinit {
@@ -39,6 +39,7 @@ impl WindowWinit {
                     if let Some(keycode) = input.virtual_keycode {
                         match input.state {
                             ElementState::Pressed => {
+                                self.keys = [false; 1024];
                                 self.keys[keycode as usize] = true;
                             }
                             ElementState::Released => {
@@ -80,7 +81,7 @@ impl GamePanel for WindowWinit {
             Self {
                 ctx,
                 event_loop: Some(event_loop),
-                renderer: Renderer::new(width as f32, height as f32),
+                renderer: Renderer::new(),
                 keys: [false; 1024],
             }
         }

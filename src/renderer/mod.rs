@@ -18,36 +18,24 @@ pub enum ImgKind {
 }
 
 pub struct Renderer {
-    pub width: f32,
-    pub height: f32,
+    gl_objects: GlObjects,
     pub res_manager: ResourcesManager,
 }
 impl Renderer {
-    pub fn new(width: f32, height: f32) -> Self {
+    pub fn new() -> Self {
+        let gl_objects = GlObjectsBuilder::new()
+            .vertices(vec![
+                // pos      // tex
+                0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0,
+                1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 0.0,
+            ])
+            .layout(MyTypes::FLOAT, 4)
+            .build();
+
         Self {
-            width,
-            height,
+            gl_objects,
             res_manager: ResourcesManager::new(),
         }
-    }
-
-    fn draw_object(&mut self, obj: &RenderObject) {
-        // self.res_manager.load_shader("sprite.shader").activate();
-        obj.vao.bind();
-        obj.texture.as_ref().unwrap().bind();
-        unsafe {
-            if obj.ebo.is_some() {
-                gl::DrawElements(
-                    gl::TRIANGLES,
-                    obj.vbo.count as GLsizei,
-                    gl::UNSIGNED_INT,
-                    ptr::null(),
-                );
-            } else {
-                gl::DrawArrays(gl::TRIANGLES, 0, obj.vbo.count as GLsizei);
-            }
-        }
-        obj.texture.as_ref().unwrap().unbind();
     }
 
     pub fn draw_image(
@@ -56,36 +44,38 @@ impl Renderer {
         size: glm::Vec2,
         rotate: f32,
         color: glm::Vec3,
-        img_name: &str,
+        image: &str,
     ) {
-        let sprite = RenderObjectBuilder::new()
-            .vertices(vec![
-                // pos      // tex
-                0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0,
-                1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 0.0,
-            ])
-            .layout(MyTypes::FLOAT, 4)
-            .texture(img_name, ImgKind::PNG, &mut self.res_manager)
-            .build();
-
         let mut model = glm::Mat4x4::from_diagonal_element(1.0);
         model = glm::translate(&model, &glm::vec3(position.x, position.y, 0.0));
-        // model = nalgebra_glm::rotate(&model, *nalgebra_glm::radians(rotate), &nalgebra_glm::vec3(0.0, 0.0, 1.0)); // then rotatemodel
+        model = glm::rotate(&model, rotate, &glm::vec3(0.0, 0.0, 1.0));
         model = glm::translate(&model, &glm::vec3(-0.5 * size.x, -0.5 * size.y, 0.0)); // move
-                                                                                       // origin backi
         model = glm::scale(&model, &glm::vec3(size.x, size.y, 1.0));
-        self.res_manager
-            .load_shader("sprite.shader")
-            .set_matrix4("model", &model);
 
-        // render textured quad
-        self.res_manager.load_shader("sprite.shader").set_vector_3f(
-            "spriteColor",
-            color.x,
-            color.y,
-            color.z,
-        );
-        self.draw_object(&sprite);
+        let shader = self.res_manager.load_shader("sprite.shader");
+        shader.activate();
+        shader.set_matrix4("model", &model);
+        shader.set_vector_3f("spriteColor", color.x, color.y, color.z);
+
+        self.gl_objects.vao.bind();
+
+        let texture = self.res_manager.load_texture(image, ImgKind::PNG);
+        texture.bind();
+
+        unsafe {
+            if self.gl_objects.ebo.is_some() {
+                gl::DrawElements(
+                    gl::TRIANGLES,
+                    self.gl_objects.vbo.count as GLsizei,
+                    gl::UNSIGNED_INT,
+                    ptr::null(),
+                );
+            } else {
+                gl::DrawArrays(gl::TRIANGLES, 0, self.gl_objects.vbo.count as GLsizei);
+            }
+        }
+        self.gl_objects.vao.unbind();
+        texture.unbind();
     }
 
     pub fn clear(&self) {
@@ -105,28 +95,24 @@ impl Renderer {
     }
 }
 
-pub struct RenderObject {
+pub struct GlObjects {
     _vertices: Vec<f32>,
     _indices: Vec<i32>,
     vao: VAO,
     vbo: VBO,
     ebo: Option<EBO>,
-    texture: Option<Texture>,
 }
-impl RenderObject {
+impl GlObjects {
     pub fn destroy(&mut self) {
         self.vao.delete();
         self.vbo.delete();
         if let Some(_) = self.ebo {
             self.ebo.as_mut().unwrap().delete();
         }
-        if let Some(_) = self.texture {
-            self.texture.as_mut().unwrap().delete();
-        }
     }
 }
 
-struct RenderObjectBuilder {
+struct GlObjectsBuilder {
     vertices: Vec<f32>,
     indices: Vec<i32>,
     vao: VAO,
@@ -135,7 +121,7 @@ struct RenderObjectBuilder {
     layouts: VertexesLayout,
     texture: Option<Texture>,
 }
-impl RenderObjectBuilder {
+impl GlObjectsBuilder {
     pub fn new() -> Self {
         let vao = VAO::new();
         vao.bind();
@@ -174,18 +160,7 @@ impl RenderObjectBuilder {
         self
     }
 
-    fn texture(
-        mut self,
-        name: &str,
-        img_kind: ImgKind,
-        res_manager: &mut ResourcesManager,
-    ) -> Self {
-        self.texture = Some(res_manager.load_texture(name, img_kind).clone());
-        self.texture.as_ref().unwrap().unbind();
-        self
-    }
-
-    fn build(self) -> RenderObject {
+    fn build(self) -> GlObjects {
         self.vao.link(&self.vbo.as_ref().unwrap(), &self.layouts);
         self.vao.unbind();
         self.vbo.as_ref().unwrap().unbind();
@@ -193,17 +168,12 @@ impl RenderObjectBuilder {
             self.ebo.as_ref().unwrap().unbind();
         }
 
-        RenderObject {
+        GlObjects {
             _vertices: self.vertices,
             _indices: self.indices,
             vao: self.vao,
             vbo: self.vbo.unwrap(),
             ebo: if self.ebo.is_some() { self.ebo } else { None },
-            texture: if self.texture.is_some() {
-                self.texture
-            } else {
-                None
-            },
         }
     }
 }

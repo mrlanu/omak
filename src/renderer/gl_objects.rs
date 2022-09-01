@@ -9,6 +9,7 @@ pub struct VBO {
 }
 impl VBO {
     pub fn new(vertices: &[f32]) -> Self {
+        println!("New VBO");
         let mut id = 0;
         unsafe {
             gl::GenBuffers(1, &mut id);
@@ -51,6 +52,7 @@ pub struct EBO {
 }
 impl EBO {
     pub fn new(indices: &[i32]) -> Self {
+        println!("New EBO");
         let mut id = 0;
         unsafe {
             gl::GenBuffers(1, &mut id);
@@ -90,6 +92,7 @@ pub struct VAO {
 }
 impl VAO {
     pub fn new() -> Self {
+        println!("New VAO");
         let mut id = 0;
         unsafe {
             gl::GenVertexArrays(1, &mut id);
