@@ -11,7 +11,7 @@ use winit::event::VirtualKeyCode;
 //--------------------------------------------------------
 
 fn main() {
-    WindowWinit::build(640, 400).run(MyGame::new());
+    WindowWinit::build(768, 576).run(MyGame::new());
 }
 
 //--------------------------------------------------------
@@ -30,7 +30,7 @@ impl Runnable for MyGame {
 impl MyGame {
     pub fn new() -> Self {
         Self {
-            player: Player::new(300, 200, 64, 64, "boy_down_1.png"),
+            player: Player::new(300, 200, 48, 48, "boy_down_1.png"),
         }
     }
 

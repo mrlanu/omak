@@ -1,7 +1,6 @@
 use std::sync::mpsc::Receiver;
 
 use crate::panels::common::{GamePanel, Runnable};
-use crate::renderer::utils::ResourcesManager;
 use crate::renderer::Renderer;
 use gl::types::*;
 use glfw::{self, Glfw};
@@ -48,6 +47,7 @@ impl WindowGlfw {
 
 impl GamePanel for WindowGlfw {
     fn build(width: u32, height: u32) -> Self {
+        env_logger::init();
         let mut glfw = glfw::init(glfw::FAIL_ON_ERRORS).unwrap();
         glfw.window_hint(glfw::WindowHint::ContextVersion(3, 3));
         glfw.window_hint(glfw::WindowHint::OpenGlProfile(
@@ -67,7 +67,6 @@ impl GamePanel for WindowGlfw {
         // ---------------------------------------
         gl::load_with(|symbol| window.get_proc_address(symbol) as *const _);
 
-        let res_manager = ResourcesManager::new();
         Self {
             width,
             height,
@@ -88,7 +87,7 @@ impl GamePanel for WindowGlfw {
             let current_time = self.glfw.get_time();
             frame_count += 1;
             if current_time - prev_time >= 1.0 {
-                println!("FPS: {}", frame_count);
+                // println!("FPS: {}", frame_count);
                 frame_count = 0;
                 prev_time = current_time;
             }

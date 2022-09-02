@@ -1,6 +1,7 @@
 use crate::panels::common::{GamePanel, Runnable};
 use crate::renderer::Renderer;
 use gl::types::*;
+use glutin::dpi::PhysicalPosition;
 use winit::{
     dpi,
     event::{ElementState, Event, VirtualKeyCode as Key, WindowEvent},
@@ -67,7 +68,9 @@ impl GamePanel for WindowWinit {
     fn build(width: u32, height: u32) -> Self {
         let window_builder = WindowBuilder::new()
             .with_title("Omak")
-            .with_inner_size(dpi::LogicalSize::new(width, height));
+            .with_inner_size(dpi::PhysicalSize::new(width, height))
+            .with_resizable(false)
+            .with_position(PhysicalPosition::new(550, 250));
         let event_loop = EventLoop::new();
         unsafe {
             let ctx = glutin::ContextBuilder::new()
@@ -77,6 +80,14 @@ impl GamePanel for WindowWinit {
             let ctx = ctx.make_current().unwrap();
             gl::load_with(|symbol| ctx.get_proc_address(symbol) as *const _);
             let window_size = ctx.window().inner_size();
+            let monitor_size = ctx.window().current_monitor().unwrap().size();
+
+            // center the window
+            ctx.window().set_outer_position(PhysicalPosition::new(
+                (monitor_size.width - window_size.width) / 2,
+                (monitor_size.height - window_size.height) / 2,
+            ));
+
             gl::Viewport(0, 0, window_size.width as i32, window_size.height as i32);
             Self {
                 ctx,
