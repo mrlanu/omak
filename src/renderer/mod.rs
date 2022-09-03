@@ -26,10 +26,17 @@ impl Renderer {
         let gl_objects = GlObjectsBuilder::new()
             .vertices(vec![
                 // pos      // tex
-                0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0,
-                1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 0.0,
+                0.0, 1.0, 0.0, 1.0, //0
+                1.0, 1.0, 1.0, 1.0, //1
+                1.0, 0.0, 1.0, 0.0, //2
+                0.0, 0.0, 0.0, 0.0, //3
             ])
-            .layout(MyTypes::FLOAT, 4)
+            .indices(vec![
+                0, 1, 2, //0
+                2, 3, 0, //1
+            ])
+            .layout(MyTypes::FLOAT, 2)
+            .layout(MyTypes::FLOAT, 2)
             .build();
 
         Self {
