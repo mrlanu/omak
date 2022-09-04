@@ -27,7 +27,7 @@ impl Runnable for MyGame {
 impl MyGame {
     pub fn new() -> Self {
         Self {
-            player: Player::new(300, 200, 32, 32, "boy_down_1.png"),
+            player: Player::new(300, 200, 32, 32, "resources/img/boy/boy_down_1.png"),
         }
     }
 
@@ -81,33 +81,33 @@ impl Player {
     fn handle_keys_events(&mut self, game_panel: &mut impl GamePanel) {
         if game_panel.get_keys()[glfw::Key::Up.get_scancode().unwrap() as usize] {
             if self.sprite_num == 1 {
-                self.image = "boy/boy_up_1.png".to_string();
+                self.image = "resources/img/boy/boy_up_1.png".to_string();
             } else {
-                self.image = "boy/boy_up_2.png".to_string();
+                self.image = "resources/img/boy/boy_up_2.png".to_string();
             }
             self.y -= self.velocity;
         }
         if game_panel.get_keys()[glfw::Key::Down.get_scancode().unwrap() as usize] {
             if self.sprite_num == 1 {
-                self.image = "boy/boy_down_1.png".to_string();
+                self.image = "resources/img/boy/boy_down_1.png".to_string();
             } else {
-                self.image = "boy/boy_down_2.png".to_string();
+                self.image = "resources/img/boy/boy_down_2.png".to_string();
             }
             self.y += self.velocity;
         }
         if game_panel.get_keys()[glfw::Key::Left.get_scancode().unwrap() as usize] {
             if self.sprite_num == 1 {
-                self.image = "boy/boy_left_1.png".to_string();
+                self.image = "resources/img/boy/boy_left_1.png".to_string();
             } else {
-                self.image = "boy/boy_left_2.png".to_string();
+                self.image = "resources/img/boy/boy_left_2.png".to_string();
             }
             self.x -= self.velocity;
         }
         if game_panel.get_keys()[glfw::Key::Right.get_scancode().unwrap() as usize] {
             if self.sprite_num == 1 {
-                self.image = "boy/boy_right_1.png".to_string();
+                self.image = "resources/img/boy/boy_right_1.png".to_string();
             } else {
-                self.image = "boy/boy_right_2.png".to_string();
+                self.image = "resources/img/boy/boy_right_2.png".to_string();
             }
 
             self.x += self.velocity;

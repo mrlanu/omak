@@ -30,7 +30,7 @@ impl Runnable for MyGame {
 impl MyGame {
     pub fn new() -> Self {
         Self {
-            player: Player::new(300, 200, 48, 48, "boy_down_1.png"),
+            player: Player::new(300, 200, 64, 40, "resources/img/player_sprites.png"),
         }
     }
 
@@ -84,33 +84,33 @@ impl Player {
     fn handle_keys_events(&mut self, game_panel: &mut impl GamePanel) {
         if game_panel.get_keys()[VirtualKeyCode::Up as usize] {
             if self.sprite_num == 1 {
-                self.image = "boy/boy_up_1.png".to_string();
+                self.image = "resources/img/boy/boy_up_1.png".to_string();
             } else {
-                self.image = "boy/boy_up_2.png".to_string();
+                self.image = "resources/img/boy/boy_up_2.png".to_string();
             }
             self.y -= self.velocity;
         }
         if game_panel.get_keys()[VirtualKeyCode::Down as usize] {
             if self.sprite_num == 1 {
-                self.image = "boy/boy_down_1.png".to_string();
+                self.image = "resources/img/boy/boy_down_1.png".to_string();
             } else {
-                self.image = "boy/boy_down_2.png".to_string();
+                self.image = "resources/img/boy/boy_down_2.png".to_string();
             }
             self.y += self.velocity;
         }
         if game_panel.get_keys()[VirtualKeyCode::Left as usize] {
             if self.sprite_num == 1 {
-                self.image = "boy/boy_left_1.png".to_string();
+                self.image = "resources/img/boy/boy_left_1.png".to_string();
             } else {
-                self.image = "boy/boy_left_2.png".to_string();
+                self.image = "resources/img/boy/boy_left_2.png".to_string();
             }
             self.x -= self.velocity;
         }
         if game_panel.get_keys()[VirtualKeyCode::Right as usize] {
             if self.sprite_num == 1 {
-                self.image = "boy/boy_right_1.png".to_string();
+                self.image = "resources/img/boy/boy_right_1.png".to_string();
             } else {
-                self.image = "boy/boy_right_2.png".to_string();
+                self.image = "resources/img/boy/boy_right_2.png".to_string();
             }
 
             self.x += self.velocity;
@@ -118,12 +118,13 @@ impl Player {
     }
 
     pub fn draw(&self, renderer: &mut Renderer) {
-        renderer.draw_image(
+        renderer.draw_subimage(
             glm::vec2(self.x as f32, self.y as f32),
             glm::vec2(self.width as f32, self.height as f32),
             0.0,
             glm::vec3(1.0, 1.0, 1.0),
             &self.image,
+            glm::vec4(0, 40 * 8, 64, 40),
         );
     }
 }

@@ -17,22 +17,6 @@ pub struct WindowWinit {
 }
 
 impl WindowWinit {
-    fn init(&mut self) {
-        let window_size = self.ctx.window().inner_size();
-        let projection: nalgebra_glm::Mat4 = nalgebra_glm::ortho(
-            0.0,
-            window_size.width as f32,
-            window_size.height as f32,
-            0.0,
-            -1.0,
-            1.0,
-        );
-        let shader = self.renderer.res_manager.load_shader("sprite.shader");
-        shader.activate();
-        shader.set_uniform_1i("image", 0);
-        shader.set_matrix4("projection", &projection);
-    }
-
     fn user_input(&mut self, event: &Event<()>) {
         match event {
             Event::WindowEvent { ref event, .. } => match event {
@@ -92,14 +76,13 @@ impl GamePanel for WindowWinit {
             Self {
                 ctx,
                 event_loop: Some(event_loop),
-                renderer: Renderer::new(),
+                renderer: Renderer::new(window_size.width, window_size.height),
                 keys: [false; 1024],
             }
         }
     }
 
     fn run(mut self, mut runnable: impl Runnable + 'static) {
-        self.init();
         let event_loop = self.event_loop.unwrap();
         self.event_loop = None;
         event_loop.run(move |event, _, control_flow| {

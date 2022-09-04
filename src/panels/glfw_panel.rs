@@ -16,15 +16,6 @@ pub struct WindowGlfw {
     renderer: Renderer,
 }
 impl WindowGlfw {
-    fn init(&mut self) {
-        let projection: nalgebra_glm::Mat4 =
-            nalgebra_glm::ortho(0.0, self.width as f32, self.height as f32, 0.0, -1.0, 1.0);
-        let shader = self.renderer.res_manager.load_shader("sprite.shader");
-        shader.activate();
-        shader.set_uniform_1i("image", 0);
-        shader.set_matrix4("projection", &projection);
-    }
-
     fn process_events(&mut self) {
         for (_, event) in glfw::flush_messages(&self.events) {
             match event {
@@ -74,12 +65,11 @@ impl GamePanel for WindowGlfw {
             events,
             glfw,
             keys: [false; 1024],
-            renderer: Renderer::new(),
+            renderer: Renderer::new(width, height),
         }
     }
 
     fn run(mut self, mut runnable: impl Runnable) {
-        self.init();
         let mut prev_time = self.glfw.get_time();
         let mut frame_count = 0;
 

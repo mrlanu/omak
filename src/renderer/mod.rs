@@ -18,11 +18,13 @@ pub enum ImgKind {
 }
 
 pub struct Renderer {
+    width: u32,
+    height: u32,
     gl_objects: GlObjects,
     pub res_manager: ResourcesManager,
 }
 impl Renderer {
-    pub fn new() -> Self {
+    pub fn new(width: u32, height: u32) -> Self {
         let gl_objects = GlObjectsBuilder::new()
             .vertices(vec![
                 // pos      // tex
@@ -40,9 +42,24 @@ impl Renderer {
             .build();
 
         Self {
+            width,
+            height,
             gl_objects,
             res_manager: ResourcesManager::new(),
         }
+        .init()
+    }
+
+    fn init(mut self) -> Self {
+        let projection: nalgebra_glm::Mat4 =
+            nalgebra_glm::ortho(0.0, self.width as f32, self.height as f32, 0.0, -1.0, 1.0);
+        let shader = self
+            .res_manager
+            .load_shader("resources/shaders/sprite.shader");
+        shader.activate();
+        shader.set_uniform_1i("image", 0);
+        shader.set_matrix4("projection", &projection);
+        self
     }
 
     pub fn draw_image(
@@ -51,24 +68,59 @@ impl Renderer {
         size: glm::Vec2,
         rotate: f32,
         color: glm::Vec3,
-        image: &str,
+        image_path: &str,
+    ) {
+        self.transform_image(position, size, rotate, color);
+        self.gl_objects.vao.bind();
+
+        let texture = self.res_manager.load_texture(image_path, ImgKind::PNG);
+        texture.bind();
+        self.draw();
+    }
+
+    pub fn draw_subimage(
+        &mut self,
+        position: glm::Vec2,
+        size: glm::Vec2,
+        rotate: f32,
+        color: glm::Vec3,
+        image_path: &str,
+        subimg: glm::UVec4, // x, y, width, height
+    ) {
+        self.transform_image(position, size, rotate, color);
+        self.gl_objects.vao.bind();
+
+        let texture = self
+            .res_manager
+            .load_texture_partial(subimg, image_path, ImgKind::PNG);
+        texture.bind();
+
+        self.draw()
+    }
+
+    fn transform_image(
+        &mut self,
+        position: glm::Vec2,
+        size: glm::Vec2,
+        rotate: f32,
+        color: glm::Vec3,
     ) {
         let mut model = glm::Mat4x4::from_diagonal_element(1.0);
         model = glm::translate(&model, &glm::vec3(position.x, position.y, 0.0));
+        model = glm::translate(&model, &glm::vec3(0.5 * size.x, 0.5 * size.y, 0.0)); // move
         model = glm::rotate(&model, rotate, &glm::vec3(0.0, 0.0, 1.0));
         model = glm::translate(&model, &glm::vec3(-0.5 * size.x, -0.5 * size.y, 0.0)); // move
         model = glm::scale(&model, &glm::vec3(size.x, size.y, 1.0));
 
-        let shader = self.res_manager.load_shader("sprite.shader");
+        let shader = self
+            .res_manager
+            .load_shader("resources/shaders/sprite.shader");
         shader.activate();
         shader.set_matrix4("model", &model);
         shader.set_vector_3f("spriteColor", color.x, color.y, color.z);
+    }
 
-        self.gl_objects.vao.bind();
-
-        let texture = self.res_manager.load_texture(image, ImgKind::PNG);
-        texture.bind();
-
+    fn draw(&self) {
         unsafe {
             if self.gl_objects.ebo.is_some() {
                 gl::DrawElements(
@@ -82,7 +134,6 @@ impl Renderer {
             }
         }
         self.gl_objects.vao.unbind();
-        texture.unbind();
     }
 
     pub fn clear(&self) {
