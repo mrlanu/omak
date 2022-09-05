@@ -2,6 +2,7 @@ use crate::panels::common::{GamePanel, Runnable};
 use crate::renderer::Renderer;
 use gl::types::*;
 use glutin::dpi::PhysicalPosition;
+use std::time::Instant;
 use winit::{
     dpi,
     event::{ElementState, Event, VirtualKeyCode as Key, WindowEvent},
@@ -14,6 +15,7 @@ pub struct WindowWinit {
     ctx: glutin::ContextWrapper<glutin::PossiblyCurrent, Window>,
     renderer: Renderer,
     keys: [bool; 1024],
+    time_created: Instant,
 }
 
 impl WindowWinit {
@@ -78,6 +80,7 @@ impl GamePanel for WindowWinit {
                 event_loop: Some(event_loop),
                 renderer: Renderer::new(window_size.width, window_size.height),
                 keys: [false; 1024],
+                time_created: Instant::now(),
             }
         }
     }
@@ -85,7 +88,18 @@ impl GamePanel for WindowWinit {
     fn run(mut self, mut runnable: impl Runnable + 'static) {
         let event_loop = self.event_loop.unwrap();
         self.event_loop = None;
+        let mut prev_time = self.time_created.elapsed().as_secs();
+        let mut frame_count = 0;
+
         event_loop.run(move |event, _, control_flow| {
+            let current_time = self.time_created.elapsed().as_secs();
+            frame_count += 1;
+            if current_time - prev_time >= 1 {
+                // println!("FPS: {}", frame_count);
+                frame_count = 0;
+                prev_time = current_time;
+            }
+
             *control_flow = ControlFlow::Poll;
             match event {
                 Event::LoopDestroyed => {

@@ -138,7 +138,7 @@ impl Renderer {
 
     pub fn clear(&self) {
         unsafe {
-            // gl::ClearColor(0.07, 0.13, 0.17, 1.0);
+            gl::ClearColor(0.0, 0.0, 0.0, 0.0);
             gl::Clear(gl::COLOR_BUFFER_BIT);
         }
     }
