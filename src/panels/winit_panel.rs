@@ -2,7 +2,8 @@ use crate::panels::common::{GamePanel, Runnable};
 use crate::renderer::Renderer;
 use gl::types::*;
 use glutin::dpi::PhysicalPosition;
-use std::time::Instant;
+use std::collections::HashSet;
+use std::time::{Duration, Instant, SystemTime};
 use winit::{
     dpi,
     event::{ElementState, Event, VirtualKeyCode as Key, WindowEvent},
@@ -10,11 +11,13 @@ use winit::{
     window::{Window, WindowBuilder},
 };
 
+const FPS: f64 = 60.0;
+
 pub struct WindowWinit {
     event_loop: Option<EventLoop<()>>,
     ctx: glutin::ContextWrapper<glutin::PossiblyCurrent, Window>,
     renderer: Renderer,
-    keys: [bool; 1024],
+    keys: HashSet<Key>,
     time_created: Instant,
 }
 
@@ -26,12 +29,10 @@ impl WindowWinit {
                     if let Some(keycode) = input.virtual_keycode {
                         match input.state {
                             ElementState::Pressed => {
-                                self.keys = [false; 1024];
-                                self.keys[keycode as usize] = true;
-                            }
+                                self.keys.clear();
+                                self.keys.insert(keycode);                           }
                             ElementState::Released => {
-                                self.keys[keycode as usize] = false;
-                            }
+                                self.keys.remove(&keycode);                           }
                         }
                     }
                 }
@@ -60,7 +61,7 @@ impl GamePanel for WindowWinit {
         let event_loop = EventLoop::new();
         unsafe {
             let ctx = glutin::ContextBuilder::new()
-                .with_vsync(true)
+                .with_vsync(false)
                 .build_windowed(window_builder, &event_loop)
                 .unwrap();
             let ctx = ctx.make_current().unwrap();
@@ -79,7 +80,7 @@ impl GamePanel for WindowWinit {
                 ctx,
                 event_loop: Some(event_loop),
                 renderer: Renderer::new(window_size.width, window_size.height),
-                keys: [false; 1024],
+                keys: HashSet::new(),
                 time_created: Instant::now(),
             }
         }
@@ -88,18 +89,15 @@ impl GamePanel for WindowWinit {
     fn run(mut self, mut runnable: impl Runnable + 'static) {
         let event_loop = self.event_loop.unwrap();
         self.event_loop = None;
-        let mut prev_time = self.time_created.elapsed().as_secs();
+
+        let time_per_frame = 1000000000.0 / FPS;
+        //let mut prev_time = self.time_created.elapsed().as_nanos() as f64;
+        let mut prev_time = self.time_created.elapsed().as_nanos();
         let mut frame_count = 0;
+        let mut last_check = self.time_created.elapsed().as_nanos();
+        let mut delta = 0.0;
 
         event_loop.run(move |event, _, control_flow| {
-            let current_time = self.time_created.elapsed().as_secs();
-            frame_count += 1;
-            if current_time - prev_time >= 1 {
-                // println!("FPS: {}", frame_count);
-                frame_count = 0;
-                prev_time = current_time;
-            }
-
             *control_flow = ControlFlow::Poll;
             match event {
                 Event::LoopDestroyed => {
@@ -114,9 +112,31 @@ impl GamePanel for WindowWinit {
 
                 // Draw to the screen when requested
                 Event::RedrawRequested(_) => {
-                    self.renderer.clear();
-                    runnable.run(&mut self);
-                    self.ctx.swap_buffers().unwrap();
+                    let current_time = self.time_created.elapsed().as_nanos();
+
+                    delta += (current_time - prev_time) as f64 / time_per_frame;
+                    prev_time = current_time;
+
+                    if delta >= 1.0 {
+                        self.renderer.clear();
+                        runnable.run(&mut self);
+                        self.ctx.swap_buffers().unwrap();
+                        delta -= 1.0;
+
+                        //should be deleted when textures loading delay will be fixed
+                        if delta > 2.0 {
+                            delta = 0.0;
+                        }
+                        //----------
+
+                        frame_count += 1;
+                    }
+
+                    if current_time - last_check >= 1000000000 {
+                        last_check = current_time;
+                        println!("FPS: {}", frame_count);
+                        frame_count = 0;
+                    }
                 }
 
                 Event::WindowEvent { ref event, .. } => match event {
@@ -147,7 +167,7 @@ impl GamePanel for WindowWinit {
         &mut self.renderer
     }
 
-    fn get_keys(&self) -> &[bool] {
-        &self.keys[..]
+    fn get_keys(&self) -> &HashSet<Key> {
+        &self.keys
     }
 }
