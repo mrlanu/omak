@@ -91,7 +91,6 @@ impl GamePanel for WindowWinit {
         self.event_loop = None;
 
         let time_per_frame = 1000000000.0 / FPS;
-        //let mut prev_time = self.time_created.elapsed().as_nanos() as f64;
         let mut prev_time = self.time_created.elapsed().as_nanos();
         let mut frame_count = 0;
         let mut last_check = self.time_created.elapsed().as_nanos();
@@ -134,7 +133,7 @@ impl GamePanel for WindowWinit {
 
                     if current_time - last_check >= 1000000000 {
                         last_check = current_time;
-                        println!("FPS: {}", frame_count);
+                        // println!("FPS: {}", frame_count);
                         frame_count = 0;
                     }
                 }
