@@ -11,6 +11,7 @@ use std::mem;
 use std::ptr;
 use texture::Texture;
 
+#[derive(Clone)]
 pub enum ImgKind {
     PNG,
     JPEG,
@@ -68,34 +69,13 @@ impl Renderer {
         size: glm::Vec2,
         rotate: f32,
         color: glm::Vec3,
-        image_path: &str,
+        texture: &Texture,
     ) {
         self.transform_image(position, size, rotate, color);
         self.gl_objects.vao.bind();
 
-        let texture = self.res_manager.load_texture(image_path, ImgKind::PNG);
         texture.bind();
         self.draw();
-    }
-
-    pub fn draw_subimage(
-        &mut self,
-        position: glm::Vec2,
-        size: glm::Vec2,
-        rotate: f32,
-        color: glm::Vec3,
-        image_path: &str,
-        subimg: glm::UVec4, // x, y, width, height
-    ) {
-        self.transform_image(position, size, rotate, color);
-        self.gl_objects.vao.bind();
-
-        let texture = self
-            .res_manager
-            .load_texture_partial(subimg, image_path, ImgKind::PNG);
-        texture.bind();
-
-        self.draw()
     }
 
     fn transform_image(
@@ -177,7 +157,6 @@ struct GlObjectsBuilder {
     vbo: Option<VBO>,
     ebo: Option<EBO>,
     layouts: VertexesLayout,
-    texture: Option<Texture>,
 }
 impl GlObjectsBuilder {
     pub fn new() -> Self {
@@ -190,7 +169,6 @@ impl GlObjectsBuilder {
             vbo: None,
             ebo: None,
             layouts: VertexesLayout::new(),
-            texture: None,
         }
     }
 

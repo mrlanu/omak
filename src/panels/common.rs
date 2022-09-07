@@ -10,6 +10,5 @@ pub trait GamePanel {
     fn get_keys(&self) -> &HashSet<Key>;
 }
 pub trait Runnable {
-    fn init(&mut self, panel: &mut impl GamePanel); // will be called first
     fn run(&mut self, panel: &mut impl GamePanel);
 }

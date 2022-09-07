@@ -1,22 +1,14 @@
-use image::DynamicImage;
-
 use crate::renderer::shader::Shader;
-use crate::renderer::texture::Texture;
-use crate::renderer::ImgKind;
-use nalgebra_glm as glm;
 use std::collections::HashMap;
 use std::fs;
-use std::path::Path;
 
 pub struct ResourcesManager {
     cached_shaders: HashMap<String, Shader>,
-    cached_textures: HashMap<String, Texture>,
 }
 
 impl ResourcesManager {
     pub fn new() -> Self {
         Self {
-            cached_textures: HashMap::new(),
             cached_shaders: HashMap::new(),
         }
     }
@@ -29,45 +21,6 @@ impl ResourcesManager {
         let new_shader = Shader::new(shader_source);
         self.cached_shaders.insert(name.clone(), new_shader);
         self.cached_shaders.get_mut(&name).unwrap()
-    }
-
-    pub fn load_texture(&mut self, img_path: &str, image_kind: ImgKind) -> &mut Texture {
-        let name = format!("{img_path}");
-        if self.cached_textures.contains_key(&name) {
-            return self.cached_textures.get_mut(&name).unwrap();
-        }
-        let image = self.load_image_from_file(img_path);
-        self.cached_textures
-            .insert(name.to_string(), Texture::new(image, image_kind));
-        self.cached_textures.get_mut(&name).unwrap()
-    }
-
-    pub fn load_texture_partial(
-        &mut self,
-        subimg: glm::UVec4,
-        img_path: &str,
-        image_kind: ImgKind,
-    ) -> &mut Texture {
-        let name = format!(
-            "{img_path}-{}-{}-{}-{}",
-            subimg.x, subimg.y, subimg.z, subimg.w
-        );
-        if self.cached_textures.contains_key(&name) {
-            return self.cached_textures.get_mut(&name).unwrap();
-        }
-        let mut image = self.load_image_from_file(img_path);
-        let subimg =
-            image::imageops::crop(&mut image, subimg.x, subimg.y, subimg.z, subimg.w).to_image();
-
-        self.cached_textures.insert(
-            name.to_string(),
-            Texture::new(image::DynamicImage::ImageRgba8(subimg), image_kind),
-        );
-        self.cached_textures.get_mut(&name).unwrap()
-    }
-
-    fn load_image_from_file(&self, img_path: &str) -> DynamicImage {
-        image::open(&Path::new(img_path)).expect("Failed to load an image")
     }
 
     fn parse_shader(&mut self, shader_path: &str) -> (String, String) {

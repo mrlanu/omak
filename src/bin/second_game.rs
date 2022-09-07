@@ -1,4 +1,6 @@
 use nalgebra_glm as glm;
+use omak::renderer::texture::{self, SpritesBuilder, Texture};
+use omak::renderer::ImgKind;
 use omak::{
     panels::{
         common::{GamePanel, Runnable},
@@ -21,9 +23,6 @@ pub struct MyGame {
 }
 
 impl Runnable for MyGame {
-    fn init(&mut self, panel: &mut impl GamePanel) {
-        self.player.load_textures(panel);
-    }
     fn run(&mut self, panel: &mut impl GamePanel) {
         self.update(panel);
         self.draw(panel);
@@ -54,23 +53,21 @@ pub struct Player {
     width: i32,
     height: i32,
     velocity: i32,
-    image: String,
     animations_kind: AnimationsKind,
-    animations: [[glm::UVec4; 6]; 9],
+    animations: Vec<Texture>,
     animations_tick: i32,
     animations_index: usize,
     animations_speed: i32,
 }
 impl Player {
     pub fn new(x: i32, y: i32, width: i32, height: i32, image: &str) -> Self {
-        let mut animations = load_animations();
+        let mut animations = load_animations(image, ImgKind::PNG);
         Self {
             x,
             y,
             width,
             height,
             velocity: 2,
-            image: image.to_string(),
             animations_kind: AnimationsKind::Idle,
             animations,
             animations_tick: 0,
@@ -119,13 +116,19 @@ impl Player {
     }
 
     pub fn draw(&self, renderer: &mut Renderer) {
-        renderer.draw_subimage(
+        renderer.draw_image(
             glm::vec2(self.x as f32, self.y as f32),
             glm::vec2(self.width as f32, self.height as f32),
             0.0,
             glm::vec3(1.0, 1.0, 1.0),
-            &self.image,
-            self.animations[self.animations_kind.get_index_and_count().0][self.animations_index],
+            &self
+                .animations
+                .get(texture::get_index(
+                    self.animations_index,
+                    self.animations_kind.get_index_and_count().0,
+                    6,
+                ))
+                .unwrap(),
         );
     }
 
@@ -139,8 +142,6 @@ impl Player {
             }
         }
     }
-
-    pub fn load_textures(&self, panel: &mut impl GamePanel) {}
 }
 
 pub enum AnimationsKind {
@@ -170,12 +171,9 @@ impl AnimationsKind {
     }
 }
 
-fn load_animations() -> [[glm::UVec4; 6]; 9] {
-    let mut animations = [[glm::vec4(0, 0, 0, 0); 6]; 9];
-    for j in 0..animations.len() {
-        for i in 0..animations[j].len() {
-            animations[j][i] = glm::vec4(i as u32 * 64, j as u32 * 40, 64, 40);
-        }
-    }
-    animations
+fn load_animations(img_path: &str, image_kind: ImgKind) -> Vec<Texture> {
+    SpritesBuilder::init(img_path, image_kind)
+        .with_rows(9, 64)
+        .with_columns(6, 40)
+        .build()
 }
