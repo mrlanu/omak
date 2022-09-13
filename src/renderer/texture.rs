@@ -8,9 +8,14 @@ use std::path::Path;
 #[derive(Clone)]
 pub struct Texture {
     pub id: u32,
+    pub width: u32,
+    pub height: u32,
 }
 impl Texture {
     fn new(image: DynamicImage, kind: ImgKind) -> Self {
+        let width = image.width();
+        let height = image.height();
+
         let img_bytes = image.as_bytes();
 
         let mut id = 0;
@@ -47,7 +52,7 @@ impl Texture {
             gl::GenerateMipmap(gl::TEXTURE_2D);
             gl::BindTexture(gl::TEXTURE_2D, 0);
         }
-        Self { id }
+        Self { id, width, height }
     }
 
     pub fn bind(&self) {

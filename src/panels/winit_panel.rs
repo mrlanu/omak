@@ -29,7 +29,7 @@ impl WindowWinit {
                     if let Some(keycode) = input.virtual_keycode {
                         match input.state {
                             ElementState::Pressed => {
-                                self.keys.clear();
+                                // self.keys.clear();
                                 self.keys.insert(keycode);                           }
                             ElementState::Released => {
                                 self.keys.remove(&keycode);                           }
