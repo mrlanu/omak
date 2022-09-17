@@ -107,11 +107,19 @@ impl MyGame {
     fn move_player(&self, action: Actions) {
         let mut positions = self.ecs.write_storage::<Position>();
         let mut players = self.ecs.write_storage::<Player>();
+        let mut coliders = self.ecs.write_storage::<Colider>();
         let velocities = self.ecs.read_storage::<Velocity>();
         let mut animations = self.ecs.write_storage::<Animation>();
+        let level_manager = self.ecs.fetch::<LevelManager>();
 
-        for (_player, pos, vel, ani) in
-            (&mut players, &mut positions, &velocities, &mut animations).join()
+        for (_player, pos, col, vel, ani) in (
+            &mut players,
+            &mut positions,
+            &mut coliders,
+            &velocities,
+            &mut animations,
+        )
+            .join()
         {
             match action {
                 Actions::Idle => {
@@ -122,20 +130,52 @@ impl MyGame {
                     ani.animations_kind = AnimationsKind::Idle;
                 }
                 Actions::MoveUp => {
-                    ani.animations_kind = AnimationsKind::Running;
-                    pos.y -= vel.velocity;
+                    if level_manager.can_move_here(
+                        col.x,
+                        col.y - vel.velocity,
+                        col.width,
+                        col.height,
+                    ) {
+                        ani.animations_kind = AnimationsKind::Running;
+                        pos.y -= vel.velocity;
+                        col.y -= vel.velocity;
+                    }
                 }
                 Actions::MoveDown => {
-                    ani.animations_kind = AnimationsKind::Running;
-                    pos.y += vel.velocity;
+                    if level_manager.can_move_here(
+                        col.x,
+                        col.y + vel.velocity,
+                        col.width,
+                        col.height,
+                    ) {
+                        ani.animations_kind = AnimationsKind::Running;
+                        pos.y += vel.velocity;
+                        col.y += vel.velocity;
+                    }
                 }
                 Actions::MoveLeft => {
-                    ani.animations_kind = AnimationsKind::Running;
-                    pos.x -= vel.velocity;
+                    if level_manager.can_move_here(
+                        col.x - vel.velocity,
+                        col.y,
+                        col.width,
+                        col.height,
+                    ) {
+                        ani.animations_kind = AnimationsKind::Running;
+                        pos.x -= vel.velocity;
+                        col.x -= vel.velocity;
+                    }
                 }
                 Actions::MoveRight => {
-                    ani.animations_kind = AnimationsKind::Running;
-                    pos.x += vel.velocity;
+                    if level_manager.can_move_here(
+                        col.x + vel.velocity,
+                        col.y,
+                        col.width,
+                        col.height,
+                    ) {
+                        ani.animations_kind = AnimationsKind::Running;
+                        pos.x += vel.velocity;
+                        col.x += vel.velocity;
+                    }
                 }
                 Actions::Attacking => {
                     ani.animations_kind = AnimationsKind::Attacking;
@@ -152,12 +192,13 @@ fn init_world() -> World {
     ecs.register::<Dimension>();
     ecs.register::<Velocity>();
     ecs.register::<Animation>();
+    ecs.register::<Colider>();
     let level_manager = LevelManager::new();
     ecs.insert(level_manager);
 
     ecs.create_entity()
         .with(Player)
-        .with(Position { x: 300.0, y: 200.0 })
+        .with(Position { x: 320.0, y: 338.0 })
         .with(Dimension {
             width: 64.0 * SCALE,
             height: 40.0 * SCALE,
@@ -173,6 +214,12 @@ fn init_world() -> World {
             animations_tick: 0,
             animations_index: 0,
             animations_speed: 6,
+        })
+        .with(Colider {
+            x: 353.0,
+            y: 346.0,
+            width: 20.0 * SCALE,
+            height: 25.0 * SCALE,
         })
         .build();
     ecs

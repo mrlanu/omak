@@ -35,6 +35,15 @@ pub struct Animation {
     pub animations_speed: i32,
 }
 
+#[derive(Component, Debug)]
+#[storage(VecStorage)]
+pub struct Colider {
+    pub x: f32,
+    pub y: f32,
+    pub width: f32,
+    pub height: f32,
+}
+
 #[derive(Debug)]
 pub enum AnimationsKind {
     Running,

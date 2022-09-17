@@ -1,8 +1,10 @@
+use crate::{GAME_HEIGHT, GAME_WIDTH};
 use crate::{TILES_IN_HEIGHT, TILES_IN_WIDTH, TILE_SIZE_SCALED};
 use nalgebra_glm as glm;
 use omak::renderer::texture::{self, SpritesBuilder, Texture};
 use omak::renderer::{ImgKind, Renderer};
 use std::path::Path;
+
 pub struct Level {
     level_data: Vec<u8>,
 }
@@ -52,5 +54,34 @@ impl LevelManager {
                 );
             }
         }
+    }
+
+    pub fn can_move_here(&self, x: f32, y: f32, width: f32, height: f32) -> bool {
+        if !self.is_solid(x, y) {
+            if !self.is_solid(x + width, y + height) {
+                if !self.is_solid(x + width, y) {
+                    if !self.is_solid(x, y + height) {
+                        return true;
+                    }
+                }
+            }
+        }
+        false
+    }
+
+    fn is_solid(&self, x: f32, y: f32) -> bool {
+        if x < 0.0 || x >= GAME_WIDTH as f32 || y < 0.0 || y >= GAME_HEIGHT as f32 {
+            return true;
+        }
+        let x_index = x / TILE_SIZE_SCALED;
+        let y_index = y / TILE_SIZE_SCALED;
+        let value: usize = self
+            .level
+            .get_sprite_index(x_index as usize, y_index as usize);
+
+        if value >= 48 || value != 11 {
+            return true;
+        }
+        false
     }
 }
