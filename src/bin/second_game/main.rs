@@ -84,24 +84,61 @@ impl MyGame {
     fn handle_keys_events(&mut self, game_panel: &mut impl GamePanel) {
         let keys = game_panel.get_keys();
         if keys.len() == 0 {
-            self.move_player(Actions::Idle);
+            self.set_animation(Actions::Idle);
         }
 
-        if keys.contains(&VirtualKeyCode::Up) {
-            self.move_player(Actions::MoveUp)
+        if keys.contains(&VirtualKeyCode::Up) && !keys.contains(&VirtualKeyCode::Down) {
+            self.move_player(Actions::MoveUp);
+            self.set_animation(Actions::MoveUp);
         }
-        if keys.contains(&VirtualKeyCode::Down) {
-            self.move_player(Actions::MoveDown)
+        if keys.contains(&VirtualKeyCode::Down) && !keys.contains(&VirtualKeyCode::Up) {
+            self.move_player(Actions::MoveDown);
+            self.set_animation(Actions::MoveDown);
         }
-        if keys.contains(&VirtualKeyCode::Left) {
-            self.move_player(Actions::MoveLeft)
+        if keys.contains(&VirtualKeyCode::Left) && !keys.contains(&VirtualKeyCode::Right) {
+            self.move_player(Actions::MoveLeft);
+            if keys.contains(&VirtualKeyCode::Q) {
+                self.set_animation(Actions::Attacking);
+            } else {
+                self.set_animation(Actions::MoveLeft);
+            }
         }
-        if keys.contains(&VirtualKeyCode::Right) {
-            self.move_player(Actions::MoveRight)
+        if keys.contains(&VirtualKeyCode::Right) && !keys.contains(&VirtualKeyCode::Left) {
+            self.move_player(Actions::MoveRight);
+            if keys.contains(&VirtualKeyCode::Q) {
+                self.set_animation(Actions::Attacking);
+            } else {
+                self.set_animation(Actions::MoveRight);
+            }
         }
-        if keys.contains(&VirtualKeyCode::Q) {
-            self.move_player(Actions::Attacking)
+        if !keys.contains(&VirtualKeyCode::Right)
+            && !keys.contains(&VirtualKeyCode::Left)
+            && keys.contains(&VirtualKeyCode::Q)
+        {
+            self.set_animation(Actions::Attacking);
         }
+    }
+
+    fn set_animation(&mut self, action: Actions) {
+        let mut animations = self.ecs.write_storage::<Animation>();
+        for ani in (&mut animations).join() {
+            let start_animation = ani.animations_kind;
+            match action {
+                Actions::MoveUp | Actions::MoveDown | Actions::MoveLeft | Actions::MoveRight => {
+                    ani.animations_kind = AnimationsKind::Running
+                }
+                Actions::Attacking => ani.animations_kind = AnimationsKind::Attacking,
+                _ => ani.animations_kind = AnimationsKind::Idle,
+            }
+            if start_animation != ani.animations_kind {
+                self.reset_animation_tick(ani);
+            }
+        }
+    }
+
+    fn reset_animation_tick(&self, ani: &mut Animation) {
+        ani.animations_tick = 0;
+        ani.animations_index = 0;
     }
 
     fn move_player(&self, action: Actions) {
@@ -122,13 +159,7 @@ impl MyGame {
             .join()
         {
             match action {
-                Actions::Idle => {
-                    if let AnimationsKind::Running | AnimationsKind::Attacking = ani.animations_kind
-                    {
-                        ani.animations_index = 0;
-                    }
-                    ani.animations_kind = AnimationsKind::Idle;
-                }
+                Actions::Idle => {}
                 Actions::MoveUp => {
                     if level_manager.can_move_here(
                         col.x,
@@ -136,7 +167,6 @@ impl MyGame {
                         col.width,
                         col.height,
                     ) {
-                        ani.animations_kind = AnimationsKind::Running;
                         pos.y -= vel.velocity;
                         col.y -= vel.velocity;
                     }
@@ -148,7 +178,6 @@ impl MyGame {
                         col.width,
                         col.height,
                     ) {
-                        ani.animations_kind = AnimationsKind::Running;
                         pos.y += vel.velocity;
                         col.y += vel.velocity;
                     }
@@ -160,7 +189,6 @@ impl MyGame {
                         col.width,
                         col.height,
                     ) {
-                        ani.animations_kind = AnimationsKind::Running;
                         pos.x -= vel.velocity;
                         col.x -= vel.velocity;
                     }
@@ -172,14 +200,11 @@ impl MyGame {
                         col.width,
                         col.height,
                     ) {
-                        ani.animations_kind = AnimationsKind::Running;
                         pos.x += vel.velocity;
                         col.x += vel.velocity;
                     }
                 }
-                Actions::Attacking => {
-                    ani.animations_kind = AnimationsKind::Attacking;
-                }
+                Actions::Attacking => {}
             }
         }
     }

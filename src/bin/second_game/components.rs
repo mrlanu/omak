@@ -44,7 +44,7 @@ pub struct Colider {
     pub height: f32,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum AnimationsKind {
     Running,
     Idle,
