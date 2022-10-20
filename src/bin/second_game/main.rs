@@ -1,5 +1,6 @@
 mod components;
 mod levels;
+mod systems;
 use components::*;
 use levels::LevelManager;
 use nalgebra_glm as glm;
@@ -9,8 +10,9 @@ use omak::panels::{
 };
 use omak::renderer::texture::{self, SpritesBuilder};
 use omak::renderer::ImgKind;
-use specs::{Builder, Join, RunNow, System, World, WorldExt, WriteStorage};
+use specs::{Builder, Join, RunNow, World, WorldExt};
 
+use systems::AnimationTick;
 use winit::event::VirtualKeyCode;
 
 const TILE_SIZE: f32 = 32.0;
@@ -292,23 +294,6 @@ fn init_world() -> World {
         })
         .build();
     ecs
-}
-
-struct AnimationTick;
-impl<'a> System<'a> for AnimationTick {
-    type SystemData = WriteStorage<'a, Animation>;
-    fn run(&mut self, mut anims: Self::SystemData) {
-        for ani in (&mut anims).join() {
-            ani.animations_tick += 1;
-            if ani.animations_tick >= ani.animations_speed {
-                ani.animations_tick = 0;
-                ani.animations_index += 1;
-                if ani.animations_index >= ani.animations_kind.get_index_and_count().1 {
-                    ani.animations_index = 0;
-                }
-            }
-        }
-    }
 }
 
 enum Actions {
