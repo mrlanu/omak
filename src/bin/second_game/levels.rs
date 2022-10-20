@@ -1,4 +1,4 @@
-use crate::{GAME_HEIGHT, GAME_WIDTH};
+use crate::{GAME_HEIGHT, GAME_WIDTH, TILE_SIZE};
 use crate::{TILES_IN_HEIGHT, TILES_IN_WIDTH, TILE_SIZE_SCALED};
 use nalgebra_glm as glm;
 use omak::renderer::texture::{self, SpritesBuilder, Texture};
@@ -78,10 +78,18 @@ impl LevelManager {
         let value: usize = self
             .level
             .get_sprite_index(x_index as usize, y_index as usize);
-
         if value >= 48 || value != 11 {
             return true;
         }
         false
+    }
+
+    pub fn is_on_floor(&self, x: f32, y: f32, width: f32, height: f32) -> bool {
+        if !self.is_solid(x, y + height + 1.0) {
+            if !self.is_solid(x + width, y + height + 1.0) {
+                return false;
+            }
+        }
+        true
     }
 }

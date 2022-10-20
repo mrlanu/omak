@@ -54,18 +54,22 @@ impl MyGame {
     fn update(&mut self, game_panel: &mut impl GamePanel) {
         self.run_systems();
         self.handle_keys_events(game_panel);
+        self.update_position();
+        self.set_animation();
     }
 
     fn draw(&mut self, game_panel: &mut impl GamePanel) {
+        let x_offset = 33.0;
+        let y_offset = 8.0;
         let level_manager = self.ecs.fetch::<LevelManager>();
         level_manager.draw(&mut game_panel.get_renderer());
 
-        let positions = self.ecs.read_storage::<Position>();
+        let coliders = self.ecs.read_storage::<Colider>();
         let mut animations = self.ecs.write_storage::<Animation>();
         let dimentions = self.ecs.read_storage::<Dimension>();
-        for (pos, dimention, animation) in (&positions, &dimentions, &mut animations).join() {
+        for (col, dimention, animation) in (&coliders, &dimentions, &mut animations).join() {
             game_panel.get_renderer().draw_image(
-                glm::vec2(pos.x, pos.y),
+                glm::vec2(col.x - x_offset, col.y - y_offset),
                 glm::vec2(dimention.width, dimention.height),
                 0.0,
                 glm::vec3(1.0, 1.0, 1.0),
@@ -83,53 +87,59 @@ impl MyGame {
 
     fn handle_keys_events(&mut self, game_panel: &mut impl GamePanel) {
         let keys = game_panel.get_keys();
-        if keys.len() == 0 {
-            self.set_animation(Actions::Idle);
-        }
+        let players = self.ecs.read_storage::<Player>();
+        let mut players_state = self.ecs.write_storage::<EntityState>();
 
-        if keys.contains(&VirtualKeyCode::Up) && !keys.contains(&VirtualKeyCode::Down) {
-            self.move_player(Actions::MoveUp);
-            self.set_animation(Actions::MoveUp);
-        }
-        if keys.contains(&VirtualKeyCode::Down) && !keys.contains(&VirtualKeyCode::Up) {
-            self.move_player(Actions::MoveDown);
-            self.set_animation(Actions::MoveDown);
-        }
-        if keys.contains(&VirtualKeyCode::Left) && !keys.contains(&VirtualKeyCode::Right) {
-            self.move_player(Actions::MoveLeft);
-            if keys.contains(&VirtualKeyCode::Q) {
-                self.set_animation(Actions::Attacking);
+        for (_player, st) in (&players, &mut players_state).join() {
+            if keys.contains(&VirtualKeyCode::Left) {
+                st.left = true;
             } else {
-                self.set_animation(Actions::MoveLeft);
+                st.left = false;
             }
-        }
-        if keys.contains(&VirtualKeyCode::Right) && !keys.contains(&VirtualKeyCode::Left) {
-            self.move_player(Actions::MoveRight);
-            if keys.contains(&VirtualKeyCode::Q) {
-                self.set_animation(Actions::Attacking);
+            if keys.contains(&VirtualKeyCode::Right) {
+                st.right = true;
             } else {
-                self.set_animation(Actions::MoveRight);
+                st.right = false;
             }
-        }
-        if !keys.contains(&VirtualKeyCode::Right)
-            && !keys.contains(&VirtualKeyCode::Left)
-            && keys.contains(&VirtualKeyCode::Q)
-        {
-            self.set_animation(Actions::Attacking);
+            if keys.contains(&VirtualKeyCode::Space) {
+                st.jump = true;
+            } else {
+                st.jump = false;
+            }
+            if keys.contains(&VirtualKeyCode::Q) {
+                st.attacking = true;
+            } else {
+                st.attacking = false;
+            }
         }
     }
 
-    fn set_animation(&mut self, action: Actions) {
+    fn set_animation(&mut self) {
+        let players = self.ecs.read_storage::<Player>();
         let mut animations = self.ecs.write_storage::<Animation>();
-        for ani in (&mut animations).join() {
+        let mut states = self.ecs.write_storage::<EntityState>();
+        let mut jumps = self.ecs.write_storage::<Jump>();
+
+        for (_player, ani, st, jmp) in (&players, &mut animations, &mut states, &mut jumps).join() {
             let start_animation = ani.animations_kind;
-            match action {
-                Actions::MoveUp | Actions::MoveDown | Actions::MoveLeft | Actions::MoveRight => {
-                    ani.animations_kind = AnimationsKind::Running
-                }
-                Actions::Attacking => ani.animations_kind = AnimationsKind::Attacking,
-                _ => ani.animations_kind = AnimationsKind::Idle,
+            if st.moving {
+                ani.animations_kind = AnimationsKind::Running;
+            } else {
+                ani.animations_kind = AnimationsKind::Idle;
             }
+
+            if st.in_air {
+                if jmp.air_speed < 0.0 {
+                    ani.animations_kind = AnimationsKind::Jumping;
+                } else {
+                    ani.animations_kind = AnimationsKind::Falling;
+                }
+            }
+
+            if st.attacking {
+                ani.animations_kind = AnimationsKind::Attacking;
+            }
+
             if start_animation != ani.animations_kind {
                 self.reset_animation_tick(ani);
             }
@@ -141,72 +151,88 @@ impl MyGame {
         ani.animations_index = 0;
     }
 
-    fn move_player(&self, action: Actions) {
-        let mut positions = self.ecs.write_storage::<Position>();
+    fn update_position(&self) {
         let mut players = self.ecs.write_storage::<Player>();
+        let mut state = self.ecs.write_storage::<EntityState>();
         let mut coliders = self.ecs.write_storage::<Colider>();
         let velocities = self.ecs.read_storage::<Velocity>();
-        let mut animations = self.ecs.write_storage::<Animation>();
+        let mut jumps = self.ecs.write_storage::<Jump>();
+
         let level_manager = self.ecs.fetch::<LevelManager>();
 
-        for (_player, pos, col, vel, ani) in (
+        for (_player, st, col, vel, jmp) in (
             &mut players,
-            &mut positions,
+            &mut state,
             &mut coliders,
             &velocities,
-            &mut animations,
+            &mut jumps,
         )
             .join()
         {
-            match action {
-                Actions::Idle => {}
-                Actions::MoveUp => {
-                    if level_manager.can_move_here(
-                        col.x,
-                        col.y - vel.velocity,
-                        col.width,
-                        col.height,
-                    ) {
-                        pos.y -= vel.velocity;
-                        col.y -= vel.velocity;
-                    }
-                }
-                Actions::MoveDown => {
-                    if level_manager.can_move_here(
-                        col.x,
-                        col.y + vel.velocity,
-                        col.width,
-                        col.height,
-                    ) {
-                        pos.y += vel.velocity;
-                        col.y += vel.velocity;
-                    }
-                }
-                Actions::MoveLeft => {
-                    if level_manager.can_move_here(
-                        col.x - vel.velocity,
-                        col.y,
-                        col.width,
-                        col.height,
-                    ) {
-                        pos.x -= vel.velocity;
-                        col.x -= vel.velocity;
-                    }
-                }
-                Actions::MoveRight => {
-                    if level_manager.can_move_here(
-                        col.x + vel.velocity,
-                        col.y,
-                        col.width,
-                        col.height,
-                    ) {
-                        pos.x += vel.velocity;
-                        col.x += vel.velocity;
-                    }
-                }
-                Actions::Attacking => {}
+            st.moving = false;
+
+            if st.jump {
+                self.jump(st, jmp);
             }
+
+            if !st.left && !st.right && !st.in_air {
+                return;
+            }
+
+            let mut x_speed = 0.0;
+
+            if st.left {
+                x_speed -= vel.velocity;
+            }
+            if st.right {
+                x_speed += vel.velocity;
+            }
+
+            if !st.in_air {
+                if !level_manager.is_on_floor(col.x, col.y, col.width, col.height) {
+                    st.in_air = true;
+                }
+            }
+
+            if st.in_air {
+                if level_manager.can_move_here(col.x, col.y + jmp.air_speed, col.width, col.height)
+                {
+                    col.y += jmp.air_speed;
+                    jmp.air_speed += jmp.gravity;
+                    self.update_x_position(&level_manager, col, x_speed);
+                } else {
+                    if jmp.air_speed > 0.0 {
+                        self.reset_in_air(st, jmp);
+                    } else {
+                        jmp.air_speed = jmp.fall_speed;
+                    }
+                    self.update_x_position(&level_manager, col, x_speed);
+                }
+            } else {
+                self.update_x_position(&level_manager, col, x_speed);
+            }
+
+            st.moving = true;
         }
+    }
+
+    fn update_x_position(&self, lvl_manager: &LevelManager, col: &mut Colider, x_speed: f32) {
+        if lvl_manager.can_move_here(col.x + x_speed, col.y, col.width, col.height) {
+            col.x += x_speed;
+        }
+    }
+
+    fn jump(&self, st: &mut EntityState, jmp: &mut Jump) {
+        if st.in_air {
+            return;
+        }
+        st.in_air = true;
+        jmp.air_speed = jmp.jump_speed;
+    }
+
+    fn reset_in_air(&self, st: &mut EntityState, jmp: &mut Jump) {
+        st.in_air = false;
+        jmp.air_speed = 0.0;
     }
 }
 
@@ -214,15 +240,27 @@ fn init_world() -> World {
     let mut ecs = World::new();
     ecs.register::<Position>();
     ecs.register::<Player>();
+    ecs.register::<EntityState>();
     ecs.register::<Dimension>();
     ecs.register::<Velocity>();
     ecs.register::<Animation>();
     ecs.register::<Colider>();
+    ecs.register::<Jump>();
     let level_manager = LevelManager::new();
     ecs.insert(level_manager);
 
     ecs.create_entity()
         .with(Player)
+        .with(EntityState {
+            moving: false,
+            attacking: false,
+            left: false,
+            right: false,
+            up: false,
+            down: false,
+            jump: false,
+            in_air: false,
+        })
         .with(Position { x: 320.0, y: 338.0 })
         .with(Dimension {
             width: 64.0 * SCALE,
@@ -245,6 +283,12 @@ fn init_world() -> World {
             y: 346.0,
             width: 20.0 * SCALE,
             height: 25.0 * SCALE,
+        })
+        .with(Jump {
+            air_speed: 0.0,
+            gravity: 0.04 * SCALE,
+            jump_speed: -2.25 * SCALE,
+            fall_speed: 0.5 * SCALE,
         })
         .build();
     ecs
@@ -274,4 +318,6 @@ enum Actions {
     MoveDown,
     Idle,
     Attacking,
+    Jump,
+    Fall,
 }

@@ -7,6 +7,19 @@ pub struct Player;
 
 #[derive(Component, Debug)]
 #[storage(VecStorage)]
+pub struct EntityState {
+    pub moving: bool,
+    pub attacking: bool,
+    pub left: bool,
+    pub right: bool,
+    pub up: bool,
+    pub down: bool,
+    pub jump: bool,
+    pub in_air: bool,
+}
+
+#[derive(Component, Debug)]
+#[storage(VecStorage)]
 pub struct Position {
     pub x: f32,
     pub y: f32,
@@ -42,6 +55,15 @@ pub struct Colider {
     pub y: f32,
     pub width: f32,
     pub height: f32,
+}
+
+#[derive(Component, Debug)]
+#[storage(VecStorage)]
+pub struct Jump {
+    pub air_speed: f32,
+    pub gravity: f32,
+    pub jump_speed: f32,
+    pub fall_speed: f32,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
