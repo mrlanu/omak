@@ -123,9 +123,9 @@ impl GamePanel for WindowWinit {
                         delta -= 1.0;
 
                         //should be deleted when textures loading delay will be fixed
-                        if delta > 2.0 {
-                            delta = 0.0;
-                        }
+                        // if delta > 2.0 {
+                        //     delta = 0.0;
+                        // }
                         //----------
 
                         frame_count += 1;

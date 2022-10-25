@@ -9,7 +9,7 @@ use gl_objects::{MyTypes, VertexBufferElement, VertexesLayout, EBO, VAO, VBO};
 use nalgebra_glm as glm;
 use std::mem;
 use std::ptr;
-use texture::Texture;
+use texture::{SpritesBuilder, Texture};
 
 #[derive(Clone)]
 pub enum ImgKind {
@@ -22,6 +22,7 @@ pub struct Renderer {
     width: u32,
     height: u32,
     gl_objects: GlObjects,
+    symbols: Vec<Texture>,
     pub res_manager: ResourcesManager,
 }
 impl Renderer {
@@ -42,10 +43,16 @@ impl Renderer {
             .layout(MyTypes::FLOAT, 2)
             .build();
 
+        let symbols = SpritesBuilder::init("resources/img/terminal8x8.png", ImgKind::PNG)
+            .with_rows(16, 8)
+            .with_columns(16, 8)
+            .build();
+
         Self {
             width,
             height,
             gl_objects,
+            symbols,
             res_manager: ResourcesManager::new(),
         }
         .init()
@@ -76,6 +83,19 @@ impl Renderer {
 
         texture.bind();
         self.draw();
+    }
+
+    pub fn println(&mut self, x: f32, y: f32, size: f32, line: &str) {
+        for (i, symbol) in line.char_indices() {
+            let symbol_texture = self.symbols[symbol as usize];
+            self.draw_image(
+                glm::vec2(x + (i as f32 * size) as f32, y),
+                glm::vec2(size, size),
+                0.0,
+                glm::vec3(1.0, 1.0, 1.0),
+                &symbol_texture,
+            );
+        }
     }
 
     fn transform_image(

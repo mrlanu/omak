@@ -5,7 +5,7 @@ use nalgebra_glm as glm;
 use std::os::raw::c_void;
 use std::path::Path;
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Copy, Debug)]
 pub struct Texture {
     pub id: u32,
     pub width: u32,
