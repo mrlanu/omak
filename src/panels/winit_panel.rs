@@ -36,9 +36,27 @@ impl WindowWinit {
                         }
                     }
                 }
+                WindowEvent::MouseWheel { delta, .. } => match delta {
+                    winit::event::MouseScrollDelta::LineDelta(x, y) => {
+                        println!("mouse wheel Line Delta: ({},{})", x, y);
+                        let pixels_per_line = 120.0;
+                        let mut pos = self.ctx.window().outer_position().unwrap();
+                        pos.x += (x * pixels_per_line) as i32;
+                        pos.y += (y * pixels_per_line) as i32;
+                        self.ctx.window().set_outer_position(pos)
+                    }
+                    winit::event::MouseScrollDelta::PixelDelta(p) => {
+                        println!("mouse wheel Pixel Delta: ({},{})", p.x, p.y);
+                        let mut pos = self.ctx.window().outer_position().unwrap();
+                        pos.x += p.x as i32;
+                        pos.y += p.y as i32;
+                        self.ctx.window().set_outer_position(pos)
+                    }
+                },
+
                 _ => {}
             },
-
+                
             Event::DeviceEvent {
                 // event: DeviceEvent::MouseMotion { delta: (dx, dy) },
                 ..

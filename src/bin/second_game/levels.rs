@@ -7,6 +7,7 @@ use std::path::Path;
 
 pub struct Level {
     level_data: Vec<u8>,
+    lewel_max_width: usize,
 }
 impl Level {
     pub fn new(level_image: &str) -> Self {
@@ -19,11 +20,14 @@ impl Level {
                 data[0],
             );
         }
-        Self { level_data }
+        Self {
+            level_data,
+            lewel_max_width: image.width() as usize,
+        }
     }
 
     pub fn get_sprite_index(&self, x: usize, y: usize) -> usize {
-        self.level_data[texture::get_index(x, y, TILES_IN_WIDTH as usize) as usize] as usize
+        self.level_data[texture::get_index(x, y, self.lewel_max_width) as usize] as usize
     }
 }
 
@@ -38,7 +42,7 @@ impl LevelManager {
                 .with_rows(4, 32)
                 .with_columns(12, 32)
                 .build(),
-            level: Level::new("resources/img/level_one_data.png"),
+            level: Level::new("resources/img/level_one_data_long.png"),
         }
     }
 
