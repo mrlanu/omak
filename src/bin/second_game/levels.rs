@@ -48,9 +48,9 @@ impl LevelManager {
 
     pub fn draw(&self, renderer: &mut Renderer) {
         for y in 0..TILES_IN_HEIGHT as i32 {
-            for x in 0..TILES_IN_WIDTH as i32 {
+            for x in 0..(TILES_IN_WIDTH + 1.0) as i32 {
                 renderer.draw_image(
-                    glm::vec2(x as f32 * TILE_SIZE_SCALED, y as f32 * TILE_SIZE_SCALED),
+                    glm::vec2((x as f32 * TILE_SIZE_SCALED), y as f32 * TILE_SIZE_SCALED),
                     glm::vec2(TILE_SIZE_SCALED, TILE_SIZE_SCALED),
                     0.0,
                     glm::vec3(1.0, 1.0, 1.0),
